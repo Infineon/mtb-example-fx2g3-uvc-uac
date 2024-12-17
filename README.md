@@ -1,6 +1,6 @@
 # EZ-USB&trade; FX2G3: USB video class (UVC) application
 
-This application implements a UVC 1.1-compliant camera application using the EZ-USB&trade; FX2G3 device. An integrated USB audio class interface is provided to stream the audio data received from a PDM microphone. This code example shows the configuration and usage of the sensor interface port (SIP) on the FX2G3 device to implement the Synchronous Slave FIFO IN protocol.
+This application demonstrates a UVC 1.1-compliant camera solution utilizing the EZ-USB&trade; FX2G3 device. An integrated USB audio class interface is provided to stream the audio data received from a PDM microphone. This code example shows the configuration and usage of the sensor interface port (SIP) on the FX2G3 device to implement the synchronous slave FIFO IN protocol.
 
 > **Note:** This code example is an alpha release only for EZ-USB&trade; FX2G3 devices.
 
@@ -10,6 +10,7 @@ This application implements a UVC 1.1-compliant camera application using the EZ-
 
 
 ## Requirements
+
 - [ModusToolbox&trade;](https://www.infineon.com/modustoolbox) v3.2 or later (tested with v3.2)
 - Board support package (BSP) minimum required version: 4.3.2
 - Programming language: C
@@ -17,12 +18,14 @@ This application implements a UVC 1.1-compliant camera application using the EZ-
 
 
 ## Supported toolchains (make variable 'TOOLCHAIN')
+
 - GNU Arm&reg; Embedded Compiler v11.3.1 (`GCC_ARM`) – Default value of `TOOLCHAIN`
 - Arm&reg; Compiler v6.16 (`ARM`)
 
+
 ## Supported kits (make variable 'TARGET')
 
-- [EZ-USB&trade; FX2G3 DVK](https://github.com/Infineon/mtb-example-fx2g3-uvc-uac) (`KIT_FX2G3_104LGA`) – Default value of `TARGET`
+- [EZ-USB&trade; FX2G3 DVK](https://www.infineon.com/cms/en/product/promopages/ez-usb-fx2g3/) (`KIT_FX2G3_104LGA`) – Default value of `TARGET`
 
 
 ## Hardware setup
@@ -72,6 +75,7 @@ The ModusToolbox&trade; tools package provides the Project Creator as both a GUI
 
 </details>
 
+
 <details><summary><b>Use Project Creator CLI</b></summary>
 
 The 'project-creator-cli' tool can be used to create applications from a CLI terminal or from within batch files or shell scripts. This tool is available in the *{ModusToolbox&trade; install directory}/tools_{version}/project-creator/* directory.
@@ -93,10 +97,12 @@ Argument | Description | Required/optional
 `--app-id`   | Defined in the <id> field of the [CE](https://github.com/Infineon?q=ce-manifest&type=&language=&sort=) manifest | Required
 `--target-dir`| Specify the directory in which the application is to be created if you prefer not to use the default current working directory | Optional
 `--user-app-name`| Specify the name of the application if you prefer to have a name other than the example's default name | Optional
+<br>
 
 > **Note:** The project-creator-cli tool uses the `git clone` and `make getlibs` commands to fetch the repository and import the required libraries. For details, see the "Project creator tools" section of the [ModusToolbox&trade; tools package user guide](https://www.infineon.com/ModusToolboxUserGuide) (locally available at {ModusToolbox&trade; install directory}/docs_{version}/mtb_user_guide.pdf).
 
 </details>
+
 
 ### Open the project
 
@@ -134,91 +140,90 @@ For more details, see the [ModusToolbox&trade; tools package user guide](https:/
 
 1. Connect the board (J2) to your PC using the provided USB cable. Connect the USBFS port (J7) on the board to PC for debug logs.
 
-2. Open a terminal program and select the Serial COM port. Set the serial port parameters to 8N1 and 921600 baud.
+2. Open a terminal program and select the Serial COM port. Set the serial port parameters to 8N1 and 921,600 baud.
 
 3. Follow these steps to program the board using the **EZ-USB&trade; FX Control Center** (Alpha) application.
-      
-   1. Open **EZ-USB&trade; FX Control Center** application.
 
-      The **EZ-USB&trade; FX2G3** device displays as **EZ-USB FX BOOTLOADER**.
+   1. Open **EZ-USB&trade; FX Control Center** application. **EZ-USB&trade; FX2G3** device displays as **EZ-USB&trade; FX BOOTLOADER**.
 
-   2. Program the FPGA binary on to the external flash with the following steps:
-   
-      a. Navigate to **Device Selection** > **Devices**, select **EZ-USB FX BOOTLOADER**, and then click the **Program** > **Internal Flash** option.
+   2. For programming the FPGA binary on to the external flash, follow these steps:
 
-      b. Browse the [mtb-example-fx2g3-flash-loader application] (https://github.com/Infineon/mtb-example-fx2g3-flash-loader), compile, and navigate to the */build/APP_KIT_FX2G3_104LGA/Release/* folder within the CE directory and locate the *.hex* file and program.
+      a. Navigate to **Device Selection** > **Devices**, select **EZ-USB&trade; FX BOOTLOADER**, and then click the **Program** > **Internal Flash** option.
 
-      c. Select the FX2G3 flash loader device in **EZ-USB&trade; FX Control Center**.
+      b. Browse the [mtb-example-fx2g3-flash-loader application](https://github.com/Infineon/mtb-example-fx2g3-flash-loader), compile, and navigate to the */build/APP_KIT_FX2G3_104LGA/Release/* folder within the application directory and locate the *.hex* file and program.
 
-      d. Navigate to **Program** > **External Flash**.
+      c. Select the **FX2G3 Flash** loader device in the **EZ-USB&trade; FX Control Center**.
 
-      e. Browse the *FPGA binary* file in the *<CE title>/BitFile* folder based on the configuration.
+      d. Click **Program** > **External Flash** option.
 
-   3. Once the FPGA binary programming is successful, return to USB bootloader mode. Once the firmware binary has been programmed onto the FX2G3 device flash, the bootloader will keep transferring control to the application on every subsequent reset.
+      e. Browse the FPGA binary file in **\<CE Title>/BitFile** folder based on the configuration.
+
+
+   3. Once the FPGA binary programming is successful, return to the USB bootloader mode. Once the firmware binary has been programmed onto the FX2G3 device flash, the bootloader will keep transferring control to the application on every subsequent reset.
 
    4. To return the control to USB bootloader, press the **BOOT MODE/PMODE (SW1)** switch on *KIT_FX2G3_104LGA DVK*.
       While the device is reset or power cycled, the device will stay in the bootloader mode instead of booting into the application.
 
-   5. Select the **FX Bootloader** device in **EZ USB&trade; FX Control Center** and click **Program** > **Internal Flash**.
+   5. Select the **FX Bootloader** device in **EZ-USB&trade; FX Control Center** and click the **Program** > **Internal Flash** option.
 
-   6. Navigate to the *<CE title>/build/APP_KIT_FX2G3_104LGA/Release/* folder within the CE directory and locate the *.hex* file, and program.
+   6. Navigate to the **/build/APP_KIT_FX2G3_104LGA/Release/** folder within the CE directory and locate the *.hex* file, and program.
 
-      Confirm if the programming is successful in the log window of the application.
+   7. Confirm if the programming is successful in the log window of the FX Control Center application.
+   
 
-4. After programming, the application starts automatically. Confirm that "\<CE Title>" is displayed on the UART terminal.
+4. After programming, the application starts automatically. Confirm that the title is displayed on the UART terminal as follows:
 
    **Figure 1. Terminal output on program startup**
 
    ![](images/terminal-fx2g3-uvc-uac.png)
 
-5. Open any third party camera application, select the FX2G3 device and video resolution to stream the video. 
+
+5. Open any third party camera application, select the FX2G3 device and video resolution to stream the video.
 
    By default, the device will stream 1K (1920x1080 ~15fps) video data.
 
 
-## Logging configurations
-
-By default, the USBFS port is enabled for debug logs.
-To enable debug logs on UART, set **USBFS_LOGS_ENABLE** compiler flag to '0u' in the *makefile*. SCB4 of the FX2G3 device is used as UART with a baud rate of 921,600 to send out log messages through the P11.0 pin.
-
-
 ## Debugging
 
-Debug the code example by setting debug levels for the UART logs. Set the **DEBUG_LEVEL** macro in *main.c* file with the following values for debugging.
+By default, the USBFS port is enabled for debug logs.
 
-**Table 2. Debug values**
+To enable debug logs on UART, set the **USBFS_LOGS_ENABLE** compiler flag to '0u' in the *makefile*. SCB4 of the EZ-USB&trade; FX2G3 device is used as UART with a baud rate of 921,600 to send out log messages through the P11.0 pin.
+
+Debug the code example by setting debug levels for the UART logs. Set the **DEBUG_LEVEL** macro in the *main.c* file with the following values for debugging.
+
+**Table 1. Debug values**
 
 Macro value     |    Description
 :-------------  | :------------
 1u              | Enable error messages
-2u                  | Enable warning messages
+2u              | Enable warning messages
 3u              | Enable info messages
-4u                | Enable all messages
-
+4u              | Enable all messages
 <br>
 
 
 ## Design and implementation
 
-This code example demonstrates how to implement USB video class and audio class specifications, letting the FX2G3 function as a UVC- and UAC-compliant composite device. This enables video and audio data to be streamed over USB 2.0. This application uses various low-performance peripherals to interface with the system such as:
+This code example demonstrates how to implement USB video class and audio class specifications, letting the FX2G3 function as a UVC- and UAC-compliant composite device. This enables video and audio data to be streamed over USB 2.0. This application uses various low performance peripherals to interface with the system such as:
 
-- I2C master to configure the video source
-- PDM receiver interface to connect audio source
-- SMIF (in x1 or single mode) interface for downloading the FPGA configuration binary on every bootup
-- Enable debug prints over CDC using the USBFS block on FX2G3
+1. I2C master to configure the video source.
+2. PDM receiver interface to connect audio source.
+3. SMIF (in x4 or quad mode) interface for downloading the FPGA configuration binary on every bootup.
+4. Enable debug prints over CDC using the USBFS block on EZ-USB&trade; FX2G3.
 
 
 ### Features of the application
 
 - **USB specifications:** USB 2.0 (Hi-Speed)
-> **Note:** UVC and UAC functions are not supported in USB Full-Speed connections.
+   > **Note:** UVC and UAC functions are not supported in USB Full-Speed connections.
 - **Video Format:** Uncompressed YUY2 (YUYV)
 - **Video Resolutions:** USB2.0 (HS): 1920X1080 (1K), 640X480 (VGA)
 - Supports video streaming using PCAM v2 image sensor
 
 This code example currently does not implement any UVC control functions such as brightness, contrast, or exposure etc.
-   
+
 This application demonstrates:
+
    
 - The usage of the FX2G3 APIs to implement a standard USB video class device. Handling of class specific USB control requests at the application level.
 - Streaming video data at USB HS speed (1K Video at ~15 fps and VGA video stream at ~60 fps) from the SIP to USB endpoint.
@@ -252,18 +257,17 @@ If the FPGA that drives the SIP interface of FX2G3 supports header addition, the
 - The firmware adds 32 bytes of UVC header in the data received from the LVCMOS side before the data is sent to the USB side on the UVC BULK endpoint 1-IN
 - UVC header is inserted FPGA itself. To enable this feature, enable the PRE_ADDED_HEADER compiler flag in the *usb_app.h*
 
-> **Note:** This example does not support UVC header insertion using the LVCMOS IP. This option can only be used if the FPGA that provides the video data supports "enhanced mode" commands to trigger the UVC header (metadata) addition. This feature will be available in next release.
+   > **Note:** This example does not support UVC header insertion using the LVCMOS IP. This option can only be used if the FPGA that provides the video data supports "enhanced mode" commands to trigger the UVC header (metadata) addition. This feature will be available in next release.
 
 
 ### Application workflow
 
-The application flow involves three steps - Initialization, USB device enumeration, and external flash programming.
+The application flow involves four steps - Initialization, USB device enumeration, UVC data transfer, and integrated UAC data transfer
 
 
 #### Initialization
 
 During initialization, the following steps are performed:
-
 1. All the required data structures are initialized.
 2. USBD and USB driver (CAL) layers are initialized.
 3. Application registers all descriptors supported by function/application with the USBD layer.
@@ -271,7 +275,8 @@ During initialization, the following steps are performed:
 5. Initialize the data transfer state machines.
 6. Application registers handlers for all relevant interrupts.
 7. Application makes the USB device visible to the host by calling the Connect API.
-8. FPGA is configured using the SMIF (in x1 or single mode) block to read the bit file stored in the external flash. FPGA sees the data on bus and gets configured.
+8. FPGA is configured using the SMIF (in x4 or quad mode) block to read the bit file stored in the external flash. FPGA sees the data on bus and gets configured.
+   > **Note:** If REV02 Kit is used FPGA is configured using SMIF in x4 or quad mode else (for REV01) FPGA is configured using SMIF in x1 or single mode.
 9. FPGA is initialized using I2C writes to FPGA registers.
 10. Application initializes the SIP block on FX2G3 as required by the selected LVCMOS operating mode.
 
@@ -285,19 +290,16 @@ During initialization, the following steps are performed:
 
 #### UVC data transfer
 
-- Depending on compile time options, LVCMOS Interface, 16-bit bus width, and UVC header addition by FX2G3 are selected
-- Once the UVC camera is opened in the host application: 
+- Depending on the compile-time options, LVCMOS Interface, 16-bit bus width, and UVC header addition by FX2G3 are selected
+- Once the UVC camera is opened in the host application:
 
    - The streaming DMA channel is enabled
-   
-   - The video source is configured to stream the selected video resolution 
-   
-   - The DMA ready flag on the SIP interface is asserted 
-   
+   - The video source is configured to stream the selected video resolution
+   - The DMA ready flag on the SIP interface is asserted
    - The FPGA data source starts streaming video data to the FX2G3 device
 
-- Video data moves from the LVCMOS subsystem to the SRAM through high-Bandwidth DMA
-- The data is forwarded to the USBHS EP 1-IN. DataWire DMA channels are used for USBHS transfers
+- Video data moves from the LVCMOS subsystem to the SRAM through high bandwidth DMA
+- The data is forwarded to the USBHS EP 1-IN. DataWire DMA channels are used in the case of USBHS transfers
 - Video data moves from USB device BULK endpoint 1-IN to the HOST UVC application
 
 
@@ -305,79 +307,80 @@ During initialization, the following steps are performed:
 
 In addition to the USB video camera interface, this application also implements a USB audio class interface, which carries the data received from a PDM microphone.
 
-The P9.0 and P9.1 pins of the FX2G3 device are used to interface to the PDM microphone.
+The P9.0 and P9.1 pins of the EZ-USB&trade; FX2G3 device are used to interface to the PDM microphone.
 
 - P9.0 is the clock output from the FX2G3 device, which is generated at 3.072 MHz
 - P9.1 is the data input from the PDM microphones to the FX2G3 device
 
-A pair of microphones in stereo configuration can be connected. Selection between mono and stereo microphone configuration is done using the STEREO_ENABLE pre-processor setting, which can be updated through the *makefile*. By default, the interface is configured for mono operation. 
+Connect a pair of microphones in stereo configuration. Selection between mono and stereo microphone configuration is done using the STEREO_ENABLE pre-processor setting, which can be updated through the *makefile*. By default, the interface is configured for mono operation. 
 
 
 ### Compile-time configurations
 
 This application's functionality can be customized through the compile-time parameters that can be turned ON or OFF through the *makefile*.
 The application uses the GNU Arm&reg; 11.3 toolchain, which is part of the ModusToolbox&trade; installation for compilation.
-- Run the `make` command to compile the application and generate a USB bootloader compatible binary. This binary can be programmed to the FX2G3 device using the EZ-USB&trade; Control Center application.
-- Run the `make BLENABLE=no` command to compile the application and generate the standalone binary. This binary can be programmed onto the FX2G3 device through the SWD interface using the OpenOCD tool. For more details, see the [EZ-USB&trade; FX2G3 SDK user guide](https://www.infineon.com/cms/en/product/promopages/ez-usb-fx2g3/#main-features-comparison).
+- Run the `make` command or build the project in your IDE to compile the application and generate a USB bootloader compatible binary. This binary can be programmed to the EZ-USB&trade; FX2G3 device using the EZ-USB&trade; Control Center GUI application
+- Run the `make BLENABLE=no` command or set the variable in the **Makefile** to compile the application and generate the standalone binary. This binary can be programmed onto the EZ-USB&trade; FX2G3 device through the SWD interface using the OpenOCD tool. For more details, see the [EZ-USB&trade; FX2G3 SDK user guide](https://www.infineon.com/cms/en/product/promopages/ez-usb-fx2g3/#main-features-comparison)
+- Run the `make REV02=no` command or set the variable in the **Makefile** to compile the application and generate the binary compatible with REV01 version of the EZ-USB&trade; FX2G3 Kit.
+  > **Note:** If REV02 Kit is used FPGA is configured using SMIF in x4 or quad mode else (for REV01) FPGA is configured using SMIF in x1 or single mode.
 
-By default, the application is configured to receive data from a 16-bit wide LVCMOS interface in SDR mode and make a USBHS data connection. These settings can be modified by passing additional options on the build command line or modifying settings in the *Makefile*.
+By default, the application is configured to receive data from a 16-bit wide LVCMOS interface in SDR mode and make a USBHS data connection. These settings can be modified by passing additional options on the build command line or modifying settings in the *makefile*.
 
-**Table 3. Macro description**
+**Table 2. Macro description**
 
-Macro name        | Description                               | Allowed values
+Flag name         | Description                               | Allowed values
 :-------------    | :------------                             | :--------------
-BUS_WIDTH_16       | Select the LVCMOS bus width              | 1u for 16-bit <br> 0u for 8-bit bus width
-INTERLEAVE_EN      | Enable GPIF thread interleaving        | 1u to enable <br> 0u to disable
-PRE_ADDED_HEADER   | UVC header addition                      | 1u for FPGA added header <br> 0u for FX2G3 added header
-AUDIO_IF_EN        | Enable Integrated UAC function           | 1u to enable <br> 0u to disable
-STEREO_ENABLE      | Enable Audio in Stereo Mode             | 1u for stereo audio <br> 0u for mono audio
-MIPI_SOURCE_ENABLE | Enable MIPI Video source                | 1u if MIPI source is present <br> 0u for FPGA-generated colorbar
-USBFS_LOGS_ENABLE  | Enable debug logs through USBFS port     | 1u for debug logs over USBFS <br> 0u for debug logs over UART (SCB4)
-
+BUS_WIDTH_16      | Select the LVCMOS bus width               | 1u for 16-bit. <br> 0u for 8-bit bus width.
+INTERLEAVE_EN     | Enabling GPIF thread interleaving         | 1u to enable. <br> 0u to disable.
+PRE_ADDED_HEADER   | UVC header addition                      | 1u for FPGA added header <br> 0u for FX2G3 added header.
+AUDIO_IF_EN        | Enable integrated UAC function           | 1u to enable <br> 0u to disable.
+STEREO_ENABLE      | Enable audio in stereo mode              | 1u for stereo audio <br> 0u for mono audio
+MIPI_SOURCE_ENABLE | Enable MIPI video source                 | 1u if MIPI source is present <br> 0u for FPGA-generated colorbar.
+USBFS_LOGS_ENABLE | Enable debug logs through USBFS port      | 1u for debug logs over USBFS. <br> 0u for debug logs over UART (SCB4).
 <br>
 
 
 ## FPGA BitFile information
 
-FPGA binary in the *BitFile* folder of the project can be programmed to an external flash on the FX2G3 DVK using the *mtb-example-fx2g3-flash-loader* firmware. 
-Follow these steps to program the binary file to external flash:
+The FPGA binary in *BitFile* folder of the project can be programmed to an external flash on the EZ-USB&trade; FX2G3 DVK using the *mtb-example-fx2g3-flash-loader* firmware. 
 
-1. Program *mtb-example-fx2g3-flash-loader.hex* using **EZ-USB&trade; FX Control Center**.
-2. Click **Program** > **External Flash**. Browse the *FPGA binary* file.
+Perform the following steps to program the binary file to the external flash.
+
+1. Program *mtb-example-fx2g3-flash-loader.hex* using the **EZ-USB&trade; FX Control Center**.
+2. **Program** > **External Flash**. Browse the *FPGA binary* file.
 3. Check the programming status.
 
-**Table 4: BitFile description**
+**Table 3. Bit file description**
 
 BitFile                                         |    Description   
 :--------------------                           | :----------------                
-*FX2G3_Design_PassiveX1_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-Bit (default)          
-*FX2G3_Design_PassiveX1_8Bit_LVCMOS_RX*         | LVCMOS RX 8-Bit
-
+*FX2G3_Design_PassiveX1_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV01 kit        
+*FX2G3_Design_PassiveX1_8Bit_LVCMOS_RX.bin*     | LVCMOS RX 8-bit for REV01 kit
+*FX2G3_Design_PassiveX4_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV02 kit (default)          
+*FX2G3_Design_PassiveX4_8Bit_LVCMOS_RX.bin*     | LVCMOS RX 8-bit for REV02 kit
 <br>
 
 
 ### Application files
 
-**Table 5. Application file description**
-
-File                                | Description   
-:-------------                      | :------------                         
-*gpif_header_lvcmos.h*              | Generated Header file for GPIF state configuration for LVCMOS Interface
-*usb_app.c*                         | C source file implementing UVC 1.1 application logic
-*usb_app.h*                         | Header file for application data structures and functions declaration
+**Table 4. Application file description**
+File                                            | Description   
+:-------------                                  | :------------                         
+*gpif_header_lvcmos.h*              | Generated Header file for GPIF state configuration for LVCMOS interface.
+*usb_app.c*                         | C source file implementing UVC 1.1 application logic.
+*usb_app.h*                         | Header file for application data structures and functions declaration.
 *usb_uvc_device.h*                  | Header file with UVC application constants and the video frame configurations
-*usb_descriptors.c*                 | C source file containing the USB descriptors
+*usb_descriptors.c*                 | C source file containing the USB descriptors.
 *main.c*                            | Source file for device initialization, ISRs, LVCMOS interface initialization, etc.
 *uac_app.c*                         | C source file with UAC interface handlers
-*usb_i2c.c*                         | C source file with I2C handlers
-*usb_i2c.h*                         | Header file with I2C application constants and the function definitions
-*usb_qspi.c*                        | C source file with SMIF handlers and FPGA configuration functions
-*usb_qspi.h*                        | Header file with SMIF application constants and the function definitions
-*cm0_code.c*                        | CM0 initialization code
+*usb_i2c.c*                         | C source file with I2C handlers.
+*usb_i2c.h*                         | Header file with I2C application constants and the function definitions.
+*usb_qspi.c*                        | C source file with SMIF handlers and FPGA configuration functions.
+*usb_qspi.h*                        | Header file with SMIF application constants and the function definitions.
+*cm0_code.c*                        | CM0 initialization code.
 *usb_imagesensor.c*                 | C Source file for PCAM v2 image sensor configuration
 *usb_imagesensor.h*                 | Header file for PCAM v2 image sensor
-*Makefile*                          | GNU make compliant build script for compiling this example
-
+*Makefile*                          | GNU make compliant build script for compiling this example.
 <br>
 
 
@@ -386,11 +389,12 @@ File                                | Description
 Resources  | Links
 -----------|----------------------------------
 Code examples  | [Using ModusToolbox&trade;](https://github.com/Infineon/Code-Examples-for-ModusToolbox-Software) on GitHub
-Device documentation | [FX2G3 datasheets](https://www.infineon.com/cms/en/product/promopages/ez-usb-fx2g3/#!?fileId=8ac78c8c90530b3a01909c03f29537e0)
-Development kits | Select your kits from the [Evaluation board finder](https://www.infineon.com/cms/en/design-support/finder-selection-tools/product-finder/evaluation-board)
+Device documentation | [EZ-USB&trade; FX2G3 datasheets](https://www.infineon.com/cms/en/product/promopages/ez-usb-fx2g3/#!?fileId=8ac78c8c90530b3a01909c03f29537e0)
+Development kits | Select your kits from the [Evaluation board finder](https://www.infineon.com/cms/en/design-support/finder-selection-tools/product-finder/evaluation-board).
 Libraries on GitHub | [mtb-pdl-cat1](https://github.com/Infineon/mtb-pdl-cat1) – Peripheral Driver Library (PDL) and docs
 Middleware on GitHub  | [usbfxstack](https://github.com/Infineon/usbfxstack) – USBFXStack middleware library and docs
 Tools  | [ModusToolbox&trade;](https://www.infineon.com/modustoolbox) – ModusToolbox&trade; software is a collection of easy-to-use libraries and tools enabling rapid development with Infineon MCUs for applications ranging from wireless and cloud-connected systems, edge AI/ML, embedded sense and control, to wired USB connectivity using PSOC&trade; Industrial/IoT MCUs, AIROC&trade; Wi-Fi and Bluetooth&reg; connectivity devices, XMC&trade; Industrial MCUs, and EZ-USB&trade;/EZ-PD&trade; wired connectivity controllers. ModusToolbox&trade; incorporates a comprehensive set of BSPs, HAL, libraries, configuration tools, and provides support for industry-standard IDEs to fast-track your embedded application development.
+<br>
 
 > **Note:** For more information about the software modules and configuration options, see the [EZ-USB&trade; FX2G3 SDK user guide](https://www.infineon.com/cms/en/product/promopages/ez-usb-fx2g3/#main-features-comparison).
 <br>
@@ -404,11 +408,12 @@ Infineon provides a wealth of data at [www.infineon.com](https://www.infineon.co
 ## Document history
 
 
-Document title: *CE240688* – *EZ-USB FX2G3: USB video class (UVC) application*
+Document title: *CE240688* – *EZ-USB&trade; FX2G3: USB video class (UVC) application*
 
  Version | Description of change
  ------- | ---------------------
  1.0.0   | New code example
+ 1.0.1   | Updated for REV02 Kit
 <br>
 
 

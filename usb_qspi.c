@@ -35,6 +35,18 @@ cy_stc_smif_context_t qspiContext;
 bool glIsFPGAConfigured = false;
 cy_en_smif_slave_select_t glSlaveSelectMode = CY_SMIF_SLAVE_SELECT_0;
 cy_en_flash_index_t glFlashMode = SPI_FLASH_0;
+#if FLASH_AT45D
+cy_en_passiveSerialMode_t glpassiveSerialMode = PASSIVE_x1;
+#else
+cy_en_passiveSerialMode_t glpassiveSerialMode = PASSIVE_x4;
+#endif
+
+#if !FLASH_AT45D
+cy_en_smif_txfr_width_t   glCommandWidth[NUM_SPI_FLASH]     = {CY_SMIF_WIDTH_SINGLE, CY_SMIF_WIDTH_SINGLE, CY_SMIF_WIDTH_QUAD};
+cy_en_smif_txfr_width_t   glReadWriteWidth[NUM_SPI_FLASH]   = {CY_SMIF_WIDTH_SINGLE, CY_SMIF_WIDTH_SINGLE, CY_SMIF_WIDTH_OCTAL};
+uint8_t glSlaveSelectIndex[NUM_SPI_FLASH] = {CY_SMIF_SLAVE_SELECT_0, CY_SMIF_SLAVE_SELECT_1, (CY_SMIF_SLAVE_SELECT_0 | CY_SMIF_SLAVE_SELECT_1)};
+cy_stc_externalFlashMetadata_t glFpgaFileMetadata;
+#endif /* !FLASH_AT45D */
 
 /* QSPI/ SMIF Config*/
 static const cy_stc_smif_config_t qspiConfig =
@@ -44,6 +56,294 @@ static const cy_stc_smif_config_t qspiConfig =
     .rxClockSel = (uint32_t)CY_SMIF_SEL_INV_INTERNAL_CLK,
     .blockEvent = (uint32_t)CY_SMIF_BUS_ERROR,
 };
+
+#if !FLASH_AT45D
+
+/*
+Function     : Cy_SPI_FlashReset ()
+Description  : Send reset command to selected flash.   
+Parameters  :  cy_en_flash_index_t flashIndex 
+Return      :  cy_en_smif_status_t  
+
+*/
+static cy_en_smif_status_t Cy_SPI_FlashReset(cy_en_flash_index_t flashIndex)
+{
+    cy_en_smif_status_t status = CY_SMIF_SUCCESS;
+
+    status = Cy_SMIF_TransmitCommand(SMIF_HW,
+            CY_APP_SPI_RESET_ENABLE_CMD,
+            CY_SMIF_WIDTH_QUAD,
+            NULL,
+            CY_SMIF_CMD_WITHOUT_PARAM,
+            CY_SMIF_WIDTH_NA,
+            (cy_en_smif_slave_select_t)glSlaveSelectIndex[flashIndex],
+            CY_SMIF_TX_LAST_BYTE,
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    status = Cy_SMIF_TransmitCommand(SMIF_HW,
+            CY_APP_SPI_SW_RESET_CMD,
+            CY_SMIF_WIDTH_QUAD,
+            NULL,
+            CY_SMIF_CMD_WITHOUT_PARAM,
+            CY_SMIF_WIDTH_NA,
+            (cy_en_smif_slave_select_t)glSlaveSelectIndex[flashIndex],
+            CY_SMIF_TX_LAST_BYTE,
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    /*tRPH delay SFS256 Flash*/
+    Cy_SysLib_DelayUs(50);
+
+    return status;
+}
+
+
+/*
+Function     : Cy_SPI_WriteEnable ()
+Description :  Set write enable latch of the selected flash. This is needed before doing program and erase operations.
+Parameters  :  cy_en_flash_index_t flashIndex 
+Return      :  cy_en_smif_status_t  
+
+*/
+static cy_en_smif_status_t Cy_QSPI_WriteEnable(cy_en_flash_index_t flashIndex)
+{
+    cy_en_smif_status_t status = CY_SMIF_SUCCESS;
+    uint8_t statusVal = 0;
+    
+    if(flashIndex == DUAL_SPI_FLASH)
+    {
+        DBG_APP_ERR("[%s]Invalid flashIndex. Access both flash memories separately\r\n",__func__);
+        return CY_SMIF_BAD_PARAM;
+    }
+
+    status = Cy_SMIF_TransmitCommand(SMIF_HW,
+            CY_SPI_WRITE_ENABLE_CMD,
+            glCommandWidth[flashIndex],
+            NULL,
+            CY_SMIF_CMD_WITHOUT_PARAM,
+            CY_SMIF_WIDTH_NA,
+            (cy_en_smif_slave_select_t)glSlaveSelectIndex[flashIndex],
+            CY_SMIF_TX_LAST_BYTE,
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+#if !FLASH_AT45D
+    /* Check if WRITE_ENABLE LATCH is set */
+    status = Cy_SMIF_TransmitCommand(SMIF_HW,
+            CY_SPI_STATUS_READ_CMD,
+            glCommandWidth[flashIndex],
+            NULL,
+            CY_SMIF_CMD_WITHOUT_PARAM,
+            CY_SMIF_WIDTH_NA,
+            (cy_en_smif_slave_select_t)glSlaveSelectIndex[flashIndex],
+            CY_SMIF_TX_NOT_LAST_BYTE,
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    status = Cy_SMIF_ReceiveDataBlocking(SMIF_HW,
+            &statusVal,
+            1u,
+            glReadWriteWidth[flashIndex],
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    if(statusVal & CY_SPI_WRITE_ENABLE_LATCH_MASK)
+    {
+        status = CY_SMIF_SUCCESS;
+    }
+    else
+    {
+        status = CY_SMIF_BUSY;
+        DBG_APP_ERR("Write Enable failed\r\n");
+    }
+#endif /* !FLASH_AT45D */
+
+    return status;
+}
+
+/*
+Function     : Cy_SPI_IsMemBusy ()
+Description :  Check if Write In Progress (WIP) bit of the flash is cleared.
+Parameters  :  cy_en_flash_index_t flashIndex 
+Return      :  bool  
+
+*/
+bool Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex)
+{
+    cy_en_smif_status_t status = CY_SMIF_SUCCESS;
+    uint8_t statusVal;
+    if(flashIndex == DUAL_SPI_FLASH)
+    {
+        DBG_APP_ERR("[%s]Invalid flashIndex. Access both flash memories separately\r\n",__func__);
+        return CY_SMIF_BAD_PARAM;
+    }
+
+    status = Cy_SMIF_TransmitCommand(SMIF_HW,
+            CY_SPI_STATUS_READ_CMD,
+            glCommandWidth[flashIndex],
+            NULL,
+            CY_SMIF_CMD_WITHOUT_PARAM,
+            CY_SMIF_WIDTH_NA,
+            (cy_en_smif_slave_select_t)glSlaveSelectIndex[flashIndex],
+            CY_SMIF_TX_NOT_LAST_BYTE,
+            &qspiContext);
+
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    status = Cy_SMIF_ReceiveDataBlocking(SMIF_HW,
+            &statusVal,
+            1u,
+            glReadWriteWidth[flashIndex],
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    /* If the Memory is busy, it returns true */
+    return ((statusVal & 0x01) == 0x01);
+}
+
+/*
+Function     : Cy_SPI_ReadConfigRegister ()
+Description :   Read selected flash's config register
+Parameters  :  cy_en_flash_index_t flashIndex, uint8_t *readValue 
+Return      :  cy_en_smif_status_t  
+
+*/
+
+static cy_en_smif_status_t Cy_SPI_WriteConfigRegister(cy_en_flash_index_t flashIndex, uint8_t writeValue)
+{
+    cy_en_smif_status_t status = CY_SMIF_SUCCESS;
+    uint8_t dataArray[2] = {0};
+
+    dataArray[0] = 0; // Status Register
+    dataArray[1] = writeValue;
+
+
+    if(flashIndex == DUAL_SPI_FLASH)
+    {
+        DBG_APP_ERR("[%s]Invalid flashIndex. Access both flash memories separately\r\n",__func__);
+        return CY_SMIF_BAD_PARAM;
+    }
+
+    status = Cy_QSPI_WriteEnable(flashIndex);
+    Cy_SysLib_Delay(200);
+    ASSERT_NON_BLOCK(CY_SMIF_SUCCESS == status, status);
+
+    DBG_APP_INFO("Write Config Register..\r\n");
+    status = Cy_SMIF_TransmitCommand(SMIF_HW,
+            CY_SPI_CONFIG_REG_WRITE_CMD_SFL,
+            glCommandWidth[flashIndex],
+            NULL,
+            CY_SMIF_CMD_WITHOUT_PARAM,
+            glCommandWidth[flashIndex],
+            (cy_en_smif_slave_select_t)glSlaveSelectIndex[flashIndex],
+            CY_SMIF_TX_NOT_LAST_BYTE,
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+    if(CY_SMIF_SUCCESS == status)
+    {
+        status = Cy_SMIF_TransmitDataBlocking(SMIF0, dataArray, 2, glReadWriteWidth[flashIndex], &qspiContext);
+        ASSERT_NON_BLOCK(CY_SMIF_SUCCESS == status, status);
+        DBG_APP_INFO("Config Register Write: 0x%x\r\n", writeValue);
+    }
+    return status;
+}
+
+/*
+Function     : Cy_SPI_ReadConfigRegister ()
+Description :   Read selected flash's config register
+Parameters  :  cy_en_flash_index_t flashIndex, uint8_t *readValue 
+Return      :  cy_en_smif_status_t  
+
+*/
+
+static cy_en_smif_status_t Cy_SPI_ReadConfigRegister(cy_en_flash_index_t flashIndex, uint8_t *readValue)
+{
+    cy_en_smif_status_t status = CY_SMIF_SUCCESS;
+
+    if((flashIndex == DUAL_SPI_FLASH) || (NULL == readValue))
+    {
+        DBG_APP_ERR("[%s]Invalid flashIndex. Access both flash memories separately\r\n",__func__);
+        return CY_SMIF_BAD_PARAM;
+    }
+
+    DBG_APP_INFO("Read Config Register..\r\n");
+    status = Cy_SMIF_TransmitCommand(SMIF_HW,
+            CY_SPI_CONFIG_REG_READ_CMD,
+            glCommandWidth[flashIndex],
+            NULL,
+            CY_SMIF_CMD_WITHOUT_PARAM,
+            glCommandWidth[flashIndex],
+            (cy_en_smif_slave_select_t)glSlaveSelectIndex[flashIndex],
+            CY_SMIF_TX_NOT_LAST_BYTE,
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+    if(CY_SMIF_SUCCESS == status)
+    {
+        status =  Cy_SMIF_ReceiveDataBlocking(SMIF_HW, readValue, 1u, glReadWriteWidth[flashIndex], &qspiContext);
+        ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+        DBG_APP_INFO("Config Register Value: 0x%x\r\n", *readValue);
+    }
+    return status;
+}
+
+/*
+Function     : Cy_QSPI_Read ()
+Description :  Perform Read operation from the flash in Register mode.
+Parameters  :  uint32_t address, uint8_t *rxBuffer, uint32_t length, cy_en_flash_index_t flashIndex 
+Return      :  cy_en_smif_status_t  
+
+*/
+
+cy_en_smif_status_t Cy_QSPI_Read(uint32_t address, uint8_t *rxBuffer, uint32_t length, cy_en_flash_index_t flashIndex)
+{
+    cy_en_smif_status_t status = CY_SMIF_SUCCESS;
+    uint8_t addrArray[CY_APP_QSPI_NUM_ADDRESS_BYTES];
+    uint8_t readCommand = CY_SPI_READ_CMD;
+    
+    if ((glCommandWidth[flashIndex] == CY_SMIF_WIDTH_QUAD) || 
+        (glReadWriteWidth[flashIndex] == CY_SMIF_WIDTH_QUAD))
+    {
+        readCommand = CY_SPI_QPI_READ_CMD;
+    }
+
+    DBG_APP_INFO("Cy_QSPI_Read :: %x %d %d \n\r",readCommand,glReadWriteWidth[flashIndex],address);
+
+    Cy_SPI_AddressToArray(address, addrArray, CY_APP_QSPI_NUM_ADDRESS_BYTES);
+
+    status = Cy_SMIF_TransmitCommand(SMIF0,
+            CY_APP_QSPI_QREAD_CMD,
+            CY_SMIF_WIDTH_SINGLE,
+            addrArray,
+            CY_APP_QSPI_NUM_ADDRESS_BYTES,
+            CY_SMIF_WIDTH_QUAD,
+            glSlaveSelectMode,
+            CY_SMIF_TX_NOT_LAST_BYTE,
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    status = Cy_SMIF_TransmitCommand(SMIF0,
+            CY_SPI_QREAD_MODE_CMD,
+            CY_SMIF_WIDTH_QUAD,
+            NULL,
+            CY_SMIF_CMD_WITHOUT_PARAM,
+            CY_SMIF_WIDTH_NA,
+            glSlaveSelectMode,
+            CY_SMIF_TX_NOT_LAST_BYTE,
+            &qspiContext);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    status = Cy_SMIF_SendDummyCycles(SMIF0, CY_APP_QSPI_QREAD_NUM_DUMMY_CYCLES_SFL);
+    ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+    if(status == CY_SMIF_SUCCESS)
+    {
+        status = Cy_SMIF_ReceiveDataBlocking(SMIF0, rxBuffer, length, CY_SMIF_WIDTH_QUAD, &qspiContext);
+        ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+    }
+    return status;
+}
+
+#endif /* !FLASH_AT45D */
 
 /* Address to array converter*/
 void Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray,uint8_t numAddressBytes)
@@ -57,10 +357,31 @@ void Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray,uint8_t numAddress
 }
 
 /* Initialize the SPI Flash*/
-cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool qpiEnable)
+cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool quadEnable, bool qpiEnable)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
+#if !FLASH_AT45D
+    uint8_t readValue = 0;
 
+    if (qpiEnable)
+    {
+        quadEnable = true;
+    }
+
+    Cy_SPI_FlashReset(flashIndex);
+
+    if(quadEnable)
+    {
+
+        Cy_SPI_ReadConfigRegister(flashIndex, &readValue);
+        DBG_APP_INFO("Cy_SPI_ReadConfigRegister %x \n\r:",readValue);
+
+        Cy_SPI_WriteConfigRegister(flashIndex, readValue | 0x02);
+
+        glReadWriteWidth[flashIndex]  = CY_SMIF_WIDTH_QUAD;
+
+    }
+#endif /* !FLASH_AT45D */
     return status;
 }
 
@@ -70,6 +391,9 @@ void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pAppCtxt,cy_stc_hbdma_buf_mgr_t *hbw_b
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
 
     /* Change QSPI Clock to 150 MHz / <DIVIDER> value */
+    Cy_SysClk_ClkHfDisable(1);
+    Cy_SysClk_ClkHfSetSource(1, CY_SYSCLK_CLKHF_IN_CLKPATH2);
+    Cy_SysClk_ClkHfSetDivider(1, CY_SYSCLK_CLKHF_NO_DIVIDE);
     Cy_SysClk_ClkHfEnable(1);
 
     /*Initialize SMIF Pins for QSPI*/
@@ -82,6 +406,7 @@ void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pAppCtxt,cy_stc_hbdma_buf_mgr_t *hbw_b
     Cy_SMIF_SetDataSelect(SMIF_HW, CY_SMIF_SLAVE_SELECT_1, CY_SMIF_DATA_SEL2);
 
     Cy_SMIF_Enable(SMIF_HW, &qspiContext);
+
 
     DBG_APP_INFO("Cy_USB_QSPIEnabled \n\r:");
 }
@@ -344,7 +669,7 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
     {
         Cy_QSPI_ConfigureSMIFPins(false);
 
-        DBG_APP_INFO("Starting Efinix Active Serial FPGA Configuration...\r\n");
+        DBG_APP_INFO("Starting Active Serial FPGA Configuration\r\n");
 
         Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);
 
@@ -401,9 +726,10 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         cy_en_smif_status_t status = CY_SMIF_SUCCESS;
         uint8_t dummyBuf[DUMMY_CYCLE] = {0};
 
-        uint8_t addrArray[4];
+        uint8_t addrArray[CY_APP_QSPI_NUM_ADDRESS_BYTES];
+        Cy_SPI_AddressToArray(bitFileStartAddress, addrArray, CY_APP_QSPI_NUM_ADDRESS_BYTES);
 
-        DBG_APP_INFO("Starting Efinix Passive Serial FPGA Configuration...\r\n");
+        DBG_APP_INFO("Starting Passive Serial FPGA Configuration\r\n");
 
         Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);    
 
@@ -428,14 +754,15 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_CDONE_PORT, T20_CDONE_PIN);
 #endif
 
+#if FLASH_AT45D
         /* Convert address and add dummy byte */
         Cy_SPI_AddressToArray(bitFileStartAddress, addrArray, 4);
 
         status = Cy_SMIF_TransmitCommand(SMIF_HW,
-                                        0x0B,                  /* Read Data Bytes Low Frequency command */
+                                        CY_APP_SPI_READ_CMD,                  /* Read Data Bytes Low Frequency command */
                                         CY_SMIF_WIDTH_SINGLE,
                                         addrArray,
-                                        4,                     /* 3 address bytes + 1 dummy byte */
+                                        CY_APP_QSPI_NUM_ADDRESS_BYTES,        /* 3 address bytes + 1 dummy byte */
                                         CY_SMIF_WIDTH_SINGLE,
                                         glSlaveSelectMode,
                                         CY_SMIF_TX_NOT_LAST_BYTE,
@@ -446,14 +773,39 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
             Cy_Debug_AddToLog(1, "Error: Cy_SPI_ReadAllOperation read cmd 0x%x\r\n", status);
             return status;
         }
+#else
+        status = Cy_SMIF_TransmitCommand(SMIF0,
+                                CY_APP_QSPI_QREAD_CMD,
+                                CY_SMIF_WIDTH_SINGLE,
+                                addrArray,
+                                CY_APP_QSPI_NUM_ADDRESS_BYTES,
+                                CY_SMIF_WIDTH_QUAD,
+                                glSlaveSelectMode,
+                                CY_SMIF_TX_NOT_LAST_BYTE,
+                                &qspiContext);
+        ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
 
-        Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);    
+        status = Cy_SMIF_TransmitCommand(SMIF0,
+                                CY_APP_QSPI_QREAD_MODE_CMD,
+                                CY_SMIF_WIDTH_QUAD,
+                                NULL,
+                                CY_SMIF_CMD_WITHOUT_PARAM,
+                                CY_SMIF_WIDTH_NA,
+                                glSlaveSelectMode,
+                                CY_SMIF_TX_NOT_LAST_BYTE,
+                                &qspiContext);
+        ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+
+        status = Cy_SMIF_SendDummyCycles(SMIF0, CY_APP_QSPI_QREAD_NUM_DUMMY_CYCLES_SFL);
+        ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
+#endif /*FLASH_AT45D */
+
+        Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);	
 
         Cy_SysLib_Delay(6); /*Minimum time between deassertion of CRESET_N to first valid configuration data.*/
 
-        /* Passive x1 - One clock cycle shifts out 1 bits.*/
         uint32_t cycles = MAX_DUMMY_CYCLES_COUNT;
-        uint32_t remainingCycles = bitFileSize*8;
+        uint32_t remainingCycles = (pAppCtxt->glpassiveSerialMode == PASSIVE_x4)? bitFileSize*2 : bitFileSize*8;
 
         while (remainingCycles > 0)
         {
@@ -464,8 +816,7 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
                 ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
                 remainingCycles -= cycles;
             }
-        }
-       
+        }  
         /* Extra clocks to get the FPGA into user mode */
         Cy_SMIF_TransmitDataBlocking(SMIF0, dummyBuf, DUMMY_CYCLE, CY_SMIF_WIDTH_SINGLE, &qspiContext);
 

@@ -1,4 +1,4 @@
-# UVC-UAC Application 1.0
+# UVC-UAC Application 1.0.1
 
 ## What's Included?
 

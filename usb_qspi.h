@@ -33,6 +33,9 @@
 #include "usb_i2c.h"
 #include "cy_debug.h"
 #include "usb_app.h"
+#if defined(__cplusplus)
+}
+#endif
 
 
 /*****************************************************************************
@@ -47,6 +50,7 @@ typedef enum cy_en_spiFlashType_t
 
 typedef enum cy_en_passiveSerialMode_t
 {
+    PASSIVE_x1,
     PASSIVE_x4,
     PASSIVE_x8
 }cy_en_passiveSerialMode_t;
@@ -67,13 +71,27 @@ typedef struct cy_stc_cfi_erase_block_info_t
   uint32_t lastAddress;
 } cy_stc_cfi_erase_block_info_t ;
 
+/* EZ-USB FX Control Center application appends a metadata section to any file it programs to the external flash.
+ * This can be used by the application using the flash to find out details such as start address, size etc. about the programmed file */
 
+typedef struct 
+{
+    uint32_t startSignature;
+    uint32_t fpgaFileStartAddress;
+    uint32_t fpgaFileSize;
+    uint32_t reserved1;
+    uint32_t reserved2;
+    uint32_t endSignature;
+}cy_stc_externalFlashMetadata_t;
 
 /*****************************************************************************
 *                          SMIF macros                                       *
 ******************************************************************************/
 
 #define FPGA_CONFIG_MODE           (PASSIVE_SERIAL_MODE)
+#define CY_APP_QSPI_METADATA_ADDRESS            (0x00)
+#define CY_APP_QSPI_METADATA_SIZE               (24)
+#define CY_APP_QSPI_METADATA_SIGNATURE          (0x23584649) /*IFX#*/
 
 #if (FPGA_CONFIG_MODE == PASSIVE_SERIAL_MODE)
 /*
@@ -151,14 +169,36 @@ typedef struct cy_stc_cfi_erase_block_info_t
 #define T20_SSN_PORT                            (1)
 #define T20_SSN_PIN                             (cy_en_lvds_phy_gpio_index_t)(0)
 
+#if FLASH_AT45D
+#define CY_APP_QSPI_NUM_ADDRESS_BYTES           (4)
+#define CY_APP_SPI_READ_CMD                     (0x0B)
+#else
+#define CY_APP_QSPI_NUM_ADDRESS_BYTES           (3)
+#define CY_APP_QSPI_QREAD_CMD                   (0xEB)
+#define CY_APP_QSPI_QREAD_MODE_CMD              (0x01)
+#define CY_APP_QSPI_QREAD_NUM_DUMMY_CYCLES_SFL  (4)
+#define CY_APP_SPI_RESET_ENABLE_CMD             (0x66)
+#define CY_APP_SPI_SW_RESET_CMD                 (0x99)
+#define CY_SPI_QREAD_MODE_CMD                   (0x01)
+#define CY_SPI_QPI_READ_CMD                     (0xEB)
+#endif
+
 #define MAX_DUMMY_CYCLES_COUNT                  (8192)
 #define EFINIX_MAX_CONFIG_FILE_SIZE             (6262080)
-
-#define FPGA_ADDRESS_OFFSET                     (5)
+#define FPGA_ADDRESS_OFFSET                     (0)
 #define DUMMY_CYCLE                             (150)
+#define CY_SPI_CONFIG_REG_READ_CMD              (0x35)
+#define CY_SPI_CONFIG_REG_WRITE_CMD_SFL         (0x01)
+#define CY_SPI_WRITE_ENABLE_CMD                 (0x06)
+#define CY_SPI_STATUS_READ_CMD                  (0x05)
+#define CY_APP_SPI_READ_ANY_REG_CMD             (0x65)
+#define CY_APP_SPI_WRITE_ANY_REGISTER_CMD       (0x71)
+#define CY_SPI_READ_CMD                         (0x03)
+#define CY_QSPI_NUM_DUMMY_CYCLES                (0x08) 
+#define CY_FLASH_ID_LENGTH                      (0x08)
+#define CY_SPI_WRITE_ENABLE_LATCH_MASK          (0x02)
 
 extern cy_stc_smif_context_t qspiContext;
-
 
 /*****************************************************************************
 * Function Name:Cy_FPGAConfigPins(cy_stc_usb_app_ctxt_t *pAppCtxt
@@ -233,6 +273,23 @@ void Cy_QSPI_ConfigureSMIFPins(bool init);
 *****************************************************************************/
 void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pUsbApp,cy_stc_hbdma_buf_mgr_t *hbw_bufmgr);
 
+/*****************************************************************************
+* Function Name:Cy_QSPI_ReadID(cy_en_smif_slave_select_t slaveSelect,
+                                     uint8_t *idBuffer)
+******************************************************************************
+* Summary:
+* Function to Read ID from QSPI
+*
+* Parameters:
+*  \param slaveSelect
+*   Slave Select line
+*  \param idBuffer
+*   Pointer to buffer
+*
+* Return:
+*  Does not return.
+*****************************************************************************/
+void Cy_QSPI_ReadID(cy_en_smif_slave_select_t slaveSelect, uint8_t *idBuffer);
 
 /*****************************************************************************
 * Function Name:Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray, 
@@ -254,6 +311,21 @@ void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pUsbApp,cy_stc_hbdma_buf_mgr_t *hbw_bu
 *****************************************************************************/
 void Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray, uint8_t numAddressBytes);
 
+/*****************************************************************************
+* Function Name:Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex))
+******************************************************************************
+* Summary:
+* Function to handler QSPI Vendor commands
+*
+* Parameters:
+*   \param flashIndex
+*   Flash Index
+*
+* Return:
+*  returns 0 if Flash is not busy
+*****************************************************************************/
+bool Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex);
+
 
 /*****************************************************************************
 * Function Name:Cy_SPI_FlashInit(cy_en_flash_index_t flashIndex, bool qpiEnable)
@@ -270,6 +342,10 @@ void Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray, uint8_t numAddres
 * Return:
 *  returns cy_en_smif_status_t
 *****************************************************************************/
-cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool qpiEnable);
+cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool quadEnable, bool qpiEnable);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /*_QSPI_H_*/

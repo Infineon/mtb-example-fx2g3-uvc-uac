@@ -232,7 +232,7 @@ cy_en_scb_i2c_status_t Cy_APP_GetFPGAVersion(cy_stc_usb_app_ctxt_t *pAppCtxt)
                            FPGA_I2C_ADDRESS_WIDTH, FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    DBG_APP_INFO("FPGA version: %x.%x\r\n",CY_USB_GET_MSB(pAppCtxt->fpgaVersion),CY_USB_GET_LSB(pAppCtxt->fpgaVersion));
+    DBG_APP_INFO("FPGA version: %x\r\n", pAppCtxt->fpgaVersion);
 
     status = Cy_I2C_Read(FPGASLAVE_ADDR, DEVICE0_OFFSET+DEVICE_FLAG_STATUS_ADDRESS,
                           &fpgaStatus, FPGA_I2C_ADDRESS_WIDTH, FPGA_I2C_DATA_WIDTH);

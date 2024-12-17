@@ -53,6 +53,9 @@ APPNAME=mtb-example-fx2g3-uvc-uac
 # GCC_ARM -- GCC provided with ModusToolbox software
 # ARM     -- ARM Clang Compiler (must be installed separately)
 #
+# To use the ARM toolchain, ensure the CY_COMPILER_ARM_DIR environment variable is set to the compiler's directory (absolute path).
+# For example, the default path for ARMCLANG from a Keil installation is typically C:/Keil_v5/ARM/ARMCLANG.
+#
 # See also: CY_COMPILER_PATH below
 TOOLCHAIN=GCC_ARM
 
@@ -61,6 +64,12 @@ TOOLCHAIN=GCC_ARM
 # yes -- Hex with bootloader region
 # no  -- Hex without bootloader region
 BLENABLE ?= yes
+
+# Generate hex compatible with REV2 Options include:
+#
+# yes -- Hex compatible for REV02 kit
+# no  -- Hex compatible for REV01 kit
+REV02 ?= yes
 
 # Default build configuration. Options include:
 #
@@ -110,26 +119,50 @@ SOURCES=
 INCLUDES=
 
 # Add additional defines to the build process (without a leading -D).
-DEFINES=FX2G3_EN=1 CYUSB4014_BZXI=1 BCLK__BUS_CLK__HZ=75000000 DEBUG_INFRA_EN=1 SILICON_ENABLE=1 FREERTOS_ENABLE=1 USBFS_LOGS_ENABLE=1 FLASH_AT45D=1 BUS_WIDTH_16=1 INTERLEAVE_EN=0 DEVICE1_EN=0 PRE_ADDED_HEADER=0 MIPI_SOURCE_ENABLE=1 AUDIO_IF_EN=1 STEREO_ENABLE=0
+DEFINES= \
+        FX2G3_EN=1 \
+        CYUSB4014_BZXI=1 \
+        BCLK__BUS_CLK__HZ=75000000 \
+        DEBUG_INFRA_EN=1 \
+        FREERTOS_ENABLE=1 \
+        USBFS_LOGS_ENABLE=1 \
+        BUS_WIDTH_16=1 \
+        INTERLEAVE_EN=0 \
+        DEVICE1_EN=0 \
+        PRE_ADDED_HEADER=0 \
+        MIPI_SOURCE_ENABLE=1 \
+        AUDIO_IF_EN=1 \
+        STEREO_ENABLE=0
 
 # Conditionally append BLOAD_ENABLE=1 if BLENABLE is set to yes
 ifneq ($(BLENABLE),)
 ifneq ($(BLENABLE), no)
-DEFINES += BLOAD_ENABLE=1
+    DEFINES += BLOAD_ENABLE=1
 endif
 endif
 
+ifeq ($(REV02), yes)
+    DEFINES += FLASH_AT45D=0
+else
+    DEFINES += FLASH_AT45D=1
+endif
+
 # Select softfp or hardfp floating point. Default is softfp.
-VFP_SELECT= nofp # with reference to map file.
+ifeq ($(TOOLCHAIN), GCC_ARM)
+    VFP_SELECT= softfp
+else ifeq ($(TOOLCHAIN), ARM)
+    VFP_SELECT= soft
+endif
 
 # Additional / custom C compiler flags.
 #
 # NOTE: Includes and defines should use the INCLUDES and DEFINES variable
 # above.
-ifeq ($(TOOLCHAIN), ARM)
-CFLAGS=-Os -Og -mcpu=Cortex-M4 -mfpu=fpv4-sp-d16 -mthumb -ffunction-sections -fdata-sections -g --target=arm-arm-none-eabi -fno-rtti -fno-exceptions -Wno-error -fshort-wchar -fshort-enums
-else ifeq ($(TOOLCHAIN), GCC_ARM)
-CFLAGS=-Os -Og -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -ffunction-sections -fdata-sections -g
+ifeq ($(TOOLCHAIN), GCC_ARM)
+    CFLAGS= -Os -Og -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -ffunction-sections -fdata-sections -g
+else ifeq ($(TOOLCHAIN), ARM)
+    CFLAGS= -Os -Og -mcpu=Cortex-M4 -mfpu=fpv4-sp-d16 -mthumb -ffunction-sections -fdata-sections -g \
+            --target=arm-arm-none-eabi -fno-rtti -fno-exceptions -Wno-error -fshort-wchar -fshort-enums
 endif
 
 # Additional / custom C++ compiler flags.
@@ -146,9 +179,9 @@ ASFLAGS=
 
 # Additional / custom linker flags.
 ifeq ($(TOOLCHAIN), ARM)
-LDFLAGS=--cpu=Cortex-M4 --entry=Reset_Handler --diag_suppress=L6329W,L6314W
+    LDFLAGS=--cpu=Cortex-M4 --entry=Reset_Handler --diag_suppress=L6329W,L6314W
 else ifeq ($(TOOLCHAIN), GCC_ARM)
-LDFLAGS=-Wl,--start-group -mcpu=cortex-m4 -mthumb --entry=Reset_Handler -Wl,--gc-sections -g -ffunction-sections -finline-functions -Os -Wl,--end-group
+    LDFLAGS=-Wl,--start-group -mcpu=cortex-m4 -mthumb --entry=Reset_Handler -Wl,--gc-sections -g -ffunction-sections -finline-functions -Os -Wl,--end-group
 endif
 
 # Additional / custom libraries to link in to the application.
@@ -172,16 +205,16 @@ PREBUILD=
 # Custom post-build commands to run.
 #Post build to merge bootloader and application
 ifeq ($(BLENABLE), yes)
-POSTBUILD=\
-    $(CY_MCUELFTOOL) --sign build/$(TARGET)/$(CONFIG)/$(APPNAME).elf SHA256 --output build/$(TARGET)/$(CONFIG)/$(APPNAME).sha.elf && \
-    $(OBJCOPY) -O ihex --gap-fill 0 build/$(TARGET)/$(CONFIG)/$(APPNAME).sha.elf build/$(TARGET)/$(CONFIG)/$(APPNAME).hex
+    POSTBUILD=\
+        $(CY_MCUELFTOOL) --sign build/$(TARGET)/$(CONFIG)/$(APPNAME).elf SHA256 --output build/$(TARGET)/$(CONFIG)/$(APPNAME).sha.elf && \
+        $(OBJCOPY) -O ihex --gap-fill 0 build/$(TARGET)/$(CONFIG)/$(APPNAME).sha.elf build/$(TARGET)/$(CONFIG)/$(APPNAME).hex
 else
 ifeq ($(TOOLCHAIN), ARM)
-POSTBUILD=\
-    $(FROMELF) --i32combined --base=0x10000000 -o build/$(TARGET)/$(CONFIG)/$(APPNAME).hex build/$(TARGET)/$(CONFIG)/$(APPNAME).elf
+    POSTBUILD=\
+        $(FROMELF) --i32combined --base=0x10000000 -o build/$(TARGET)/$(CONFIG)/$(APPNAME).hex build/$(TARGET)/$(CONFIG)/$(APPNAME).elf
 else
-POSTBUILD=\
-    $(OBJCOPY) -O ihex build/$(TARGET)/$(CONFIG)/$(APPNAME).elf build/$(TARGET)/$(CONFIG)/$(APPNAME).hex
+    POSTBUILD=\
+        $(OBJCOPY) -O ihex build/$(TARGET)/$(CONFIG)/$(APPNAME).elf build/$(TARGET)/$(CONFIG)/$(APPNAME).hex
 endif
 
 endif
@@ -215,11 +248,6 @@ CY_GETLIBS_SHARED_NAME=mtb_shared
 # The default depends on the selected TOOLCHAIN (GCC_ARM uses the ModusToolbox
 # software provided compiler by default).
 CY_COMPILER_GCC_ARM_DIR=
-
-# ARM_CLANG Toolchain Configuration
-# Add absolute path to the compiler's "bin" directory.
-# Example: ARMCLANG path from Keil installation directory coud be <Keil Installation Path>/ARM/ARMCLANG
-CY_COMPILER_ARM_DIR=
 
 # Locate ModusToolbox helper tools folders in default installation
 # locations for Windows, Linux, and macOS.

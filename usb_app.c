@@ -346,7 +346,7 @@ static cy_en_scb_i2c_status_t Cy_UVC_ConfigFpgaRegister (void)
 
 static cy_en_hbdma_mgr_status_t CyUVCAppStart(cy_stc_usb_app_ctxt_t *pAppCtxt,uint32_t format_index, uint32_t frame_index, uint16_t DeviceIndex)
 {
-    cy_en_hbdma_mgr_status_t mgrStatus;
+    cy_en_hbdma_mgr_status_t mgrStatus = CY_HBDMA_MGR_SUCCESS;
     DBG_APP_INFO("AppStart\r\n");
 
     if (DEVICE0_OFFSET == DeviceIndex)
@@ -388,13 +388,29 @@ static void CyUVCAppStop(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_stc_usb_usbd_ctxt_t
     cy_en_hbdma_mgr_status_t status = CY_HBDMA_MGR_SUCCESS;
     uint16_t DeviceIndex;
     uint32_t epNumber = ((uint32_t)wIndex & 0x7FUL);
+    uint8_t index = 0;
+    cy_stc_hbdma_sock_t sckStat;
+
     DBG_APP_INFO("App Stop:windex=0x%x\r\n",wIndex);
 
-#if FPGA_ENABLE
-    if(UVC_STREAM_ENDPOINT == epNumber)
-        DeviceIndex = DEVICE0_OFFSET;
+    if((cy_uvc_IsApplnActive == true) && (pAppCtxt->hbBulkInChannel != NULL))
+    {
+        /* Wait for DMA sockets to stall */
+        for(index = 0; index < pAppCtxt->hbBulkInChannel->prodSckCount; index++)
+        {
+            do {
+                Cy_HBDma_GetSocketStatus(pAppCtxt->pHbDmaMgrCtxt->pDrvContext, pAppCtxt->hbBulkInChannel->prodSckId[index], &sckStat);
+            } while(((_FLD2VAL(LVDSSS_LVDS_ADAPTER_DMA_SCK_STATUS_STATE,sckStat.status)) != 0x1));
 
-    Cy_UVC_DataStreamStartStop(DeviceIndex, STOP);
+            DBG_APP_INFO("DMA Socket %x is stalled\r\n", pAppCtxt->hbBulkInChannel->prodSckId[index]);
+        }
+    }
+
+#if FPGA_ENABLE
+    if(UVC_STREAM_ENDPOINT == epNumber){
+        DeviceIndex = DEVICE0_OFFSET;
+        Cy_UVC_DataStreamStartStop(DeviceIndex, STOP);
+    }
 #endif
 
     if (UVC_STREAM_ENDPOINT == epNumber)
@@ -707,31 +723,24 @@ void Cy_UVC_DeviceTaskHandler(void *pTaskParam)
     BaseType_t xStatus;
     uint16_t wIndex;
 
+    vTaskDelay(250);
+
     /* Reset Frame Id in UVC Header */
     cy_uvc_header_[1] = CY_USB_UVC_HEADER_DEFAULT_BFH;
     DBG_APP_INFO("UvcDeviceThreadCreated\r\n");
-    vTaskDelay(100);
 
     /*  All UVC control structures copied from flash to the HBW SRAM buffers */
     memcpy (cy_uvc_probectrl_HS_VGA, cy_uvc_probectrl_HS_VGA_, sizeof(cy_uvc_probectrl_HS_VGA_));
     memcpy (cy_uvc_probectrl_HS_1080p, cy_uvc_probectrl_HS_1080p_, sizeof(cy_uvc_probectrl_HS_1080p_));
-
     memcpy (cy_uvc_header, cy_uvc_header_, sizeof(cy_uvc_header_));
-
-    /* If VBus is present, enable the USB connection. */
-    pAppCtxt->vbusPresent = (Cy_GPIO_Read(VBUS_DETECT_GPIO_PORT, VBUS_DETECT_GPIO_PIN) == VBUS_DETECT_STATE);
-    if (pAppCtxt->vbusPresent) {
-        Cy_USB_EnableUsbHSConnection(pAppCtxt);
-    }
 
 #if FPGA_ENABLE
     Cy_FPGAConfigPins(pAppCtxt,FPGA_CONFIG_MODE);
     Cy_QSPI_Start(pAppCtxt,&HBW_BufMgr);
-    Cy_SPI_FlashInit(SPI_FLASH_0, false);
+    Cy_SPI_FlashInit(SPI_FLASH_0, true,false);
 
+    DBG_APP_INFO("Configure FPGA\n\r");
     Cy_FPGAConfigure(pAppCtxt,FPGA_CONFIG_MODE);
-
-    DBG_APP_INFO("Configure FPGA\n\r"); 
 
     if(!glIsFPGARegConfigured)
     {
@@ -739,13 +748,13 @@ void Cy_UVC_DeviceTaskHandler(void *pTaskParam)
         if(0 == Cy_UVC_ConfigFpgaRegister())
         {
             glIsFPGARegConfigured = true;
-            DBG_APP_INFO("Successfuly configured FPGA via I2C \n\r"); 
+            DBG_APP_TRACE("Successfuly configured FPGA via I2C \n\r"); 
 #if MIPI_SOURCE_ENABLE            
             Cy_UVC_ConfigureImageSensor();                
             if (glIsSensorConfigured == false) {
                 /* Select INTERNAL_COLORBAR */    
             
-                DBG_APP_INFO("Select INTERNAL_COLORBAR \n\r"); 
+                DBG_APP_TRACE("Select INTERNAL_COLORBAR \n\r"); 
                 cy_en_scb_i2c_status_t status = CY_SCB_I2C_SUCCESS;
                 status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_SOURCE_TYPE_ADDRESS, INTERNAL_COLORBAR,
                                                       FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
@@ -761,10 +770,16 @@ void Cy_UVC_DeviceTaskHandler(void *pTaskParam)
 
 #endif
 
-    vTaskDelay(100);
-
     /* Initialize the LVDS interface. */
     Cy_UVC_LvdsInit(); 
+
+    vTaskDelay(100);
+
+    /* If VBus is present, enable the USB connection. */
+    pAppCtxt->vbusPresent = (Cy_GPIO_Read(VBUS_DETECT_GPIO_PORT, VBUS_DETECT_GPIO_PIN) == VBUS_DETECT_STATE);
+    if (pAppCtxt->vbusPresent) {
+        Cy_USB_EnableUsbHSConnection(pAppCtxt);
+    }
 
     for (;;)
     {
@@ -1356,6 +1371,7 @@ void Cy_USB_AppConfigureEndp (cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint8_t *pEndpD
     uint32_t isoPkts = 0x00;
     uint8_t burstSize = 0x00;
     uint8_t maxStream = 0x00;
+    uint8_t interval = 0x00;
     cy_en_usbd_ret_code_t usbdRetCode;
 
     /* If it is not endpoint descriptor then return */
@@ -1364,7 +1380,6 @@ void Cy_USB_AppConfigureEndp (cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint8_t *pEndpD
         return;
     }
     Cy_USBD_GetEndpNumMaxPktDir(pEndpDscr, &endpNumber, &maxPktSize, &dir);
-
     if (dir)
     {
         endpDirection = CY_USB_ENDP_DIR_IN;
@@ -1382,6 +1397,7 @@ void Cy_USB_AppConfigureEndp (cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint8_t *pEndpD
     }
 
     valid = 0x01;
+    Cy_USBD_GetEndpInterval(pEndpDscr, &interval);
 
     /* Prepare endpointConfig parameter. */
     endpConfig.endpType = (cy_en_usb_endp_type_t)endpType;
@@ -1393,6 +1409,7 @@ void Cy_USB_AppConfigureEndp (cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint8_t *pEndpD
     endpConfig.burstSize = burstSize;
     endpConfig.streamID = maxStream;
     endpConfig.allowNakTillDmaRdy = false;
+    endpConfig.interval = interval;
     usbdRetCode = Cy_USB_USBD_EndpConfig(pUsbdCtxt, endpConfig);
 
     /* Print status of the endpoint configuration to help debug. */
