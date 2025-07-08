@@ -1,9 +1,9 @@
-#! armclang -x assembler-with-cpp -E --target=arm-arm-none-eabi
+#! armcc -E
 ; The first line specifies a preprocessor command that the linker invokes
 ; to pass a scatter file through a C preprocessor.
 
 ;*******************************************************************************
-;* \file fx_cm4_dual.sct
+;* \file fx2g3_cm0plus.sct
 ;* \version 1.00
 ;*
 ;* Linker file for the ARMCC.
@@ -26,7 +26,7 @@
 ;*
 ;*******************************************************************************
 ;* \copyright
-;* Copyright (2025) Cypress Semiconductor Corporation
+;* Copyright 2021-2022 Cypress Semiconductor Corporation
 ;* SPDX-License-Identifier: Apache-2.0
 ;*
 ;* Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,14 +45,14 @@
 ; The defines below describe the location and size of blocks of memory in the target.
 ; Use these defines to specify the memory regions available for allocation.
 
-; The following defines control RAM and flash memory allocation for the CM4 core.
-; You can change the memory allocation by editing RAM and Flash defines.
+; The following defines control RAM and flash memory allocation for the CM0+ core.
+; You can change the memory allocation by editing the RAM and Flash defines.
 ; Note that 2 KB of RAM (at the end of the SRAM) are reserved for system use.
 ; Using this memory region for other purposes will lead to unexpected behavior.
-; Your changes must be aligned with the corresponding defines for CM0+ core in 'xx_cm0plus.scat',
-; where 'xx' is the device group; for example, 'cy8c6xx7_cm0plus.scat'.
+; Your changes must be aligned with the corresponding defines for the CM4 core in 'xx_cm4_dual.scat',
+; where 'xx' is the device group; for example, 'cy8c6xx7_cm4_dual.scat'.
 ; RAM
-#define RAM_START               0x08002000
+#define RAM_START               0x08000000
 #define RAM_SIZE                0x0001D800
 ; Flash
 #define FLASH_START             0x10000000
@@ -61,33 +61,21 @@
 #define DESC_START              0x1C004000
 #define DESC_SIZE               0x0000C000
 
-; The size of the stack section at the end of CM4 SRAM
-#define STACK_SIZE              0x00002000
+; The size of the stack section at the end of CM0+ SRAM
+#define STACK_SIZE              0x00001000
 
-; By default, the COMPONENT_CM0P_SLEEP prebuilt image is used for the CM0p core.
-; More about CM0+ prebuilt images, see here:
-; https://github.com/Infineon/psoc6cm0p
-; The size of the Cortex-M0+ application flash image
-#define FLASH_CM0P_SIZE         0x0400
-
-; Cortex-M4 application flash area
+; Cortex-M0+ application flash area
 LR_IROM1 FLASH_START FLASH_SIZE
 {
-    ; Cortex-M0+ application flash image area
-    .cy_m0p_image +0 FLASH_CM0P_SIZE
-    {
-        * (.cm0_code)
-    }
-
-    ER_FLASH_VECTORS (FLASH_START + FLASH_CM0P_SIZE) FIXED
+    ER_FLASH_VECTORS +0
     {
         * (RESET, +FIRST)
     }
 
     ER_FLASH_CODE +0 FIXED
     {
-        *.o(.text)
-        *.o(+RO)
+        * (InRoot$$Sections)
+        * (+RO)
     }
 
     ER_RAM_VECTORS RAM_START UNINIT
@@ -125,6 +113,8 @@ LR_IROM1 FLASH_START FLASH_SIZE
         * (.hbBufSection)
     }
 }
+
+
 
 /* The following symbols used by the cymcuelftool. */
 /* Flash */

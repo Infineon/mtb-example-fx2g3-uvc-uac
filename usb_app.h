@@ -2,11 +2,11 @@
 * \file usb_app.h
 * \version 1.0
 *
-* Defines the interfaces used in the FX2G3 USB Video Class application.
+* \brief Defines the interfaces used in the FX2G3 USB Video Class application.
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -35,6 +35,7 @@
 extern "C" {
 #endif
 
+
 #define RED                             "\033[0;31m"
 #define CYAN                            "\033[0;36m"
 #define COLOR_RESET                     "\033[0m"
@@ -62,9 +63,9 @@ extern "C" {
 #define LINK_TRAINING_PATTERN_BYTE     (0x00000000) 
 #define FPS_DEFAULT                    (60)
 
-#define    SET_BIT(byte, mask)               (byte) |= (mask)
-#define CLR_BIT(byte, mask)               (byte) &= ~(mask)
-#define CHK_BIT(byte, mask)               (byte) & (mask)
+#define SET_BIT(byte, mask)            (byte) |= (mask)
+#define CLR_BIT(byte, mask)            (byte) &= ~(mask)
+#define CHK_BIT(byte, mask)            (byte) & (mask)
 
 
 /* DMA channel and UVC header configuration*/
@@ -85,10 +86,9 @@ extern "C" {
 #define FPGA_DMA_BUFFER_SIZE            (DMA_BUFFER_SIZE)
 #endif
 
-
-#define ASSERT(condition, value)                            Cy_CheckStatus(__func__, __LINE__, condition, value, true);
-#define ASSERT_NON_BLOCK(condition, value)                  Cy_CheckStatus(__func__, __LINE__, condition, value, false);
-#define ASSERT_AND_HANDLE(condition, value, failureHandler) Cy_CheckStatusHandleFailure(__func__, __LINE__, condition, value, false, failureHandler);
+#define ASSERT(condition, value)        Cy_CheckStatus(__func__, __LINE__, condition, value, true);
+#define ASSERT_NON_BLOCK(condition, value) Cy_CheckStatus(__func__, __LINE__, condition, value, false);
+#define ASSERT_AND_HANDLE(condition, value, failureHandler) Cy_CheckStatusHandleFailure(__func__, __LINE__, condition, value, false, Cy_FailHandler);
 
 /* P4.0 is used for VBus detect functionality. */
 #define VBUS_DETECT_GPIO_PORT           (P4_0_PORT)
@@ -98,8 +98,11 @@ extern "C" {
 
 /* Number of buffers used for PDM data transfer. */
 #define PDM_APP_BUFFER_CNT              (4u)
-#define RAM_BUF_SZ_WORDS                (15360)         /* Total size of the RAM based DMA buffers: 15 KB. */
 #define GPIF_SM_NUM                     (0u)
+
+#define PDM_RX_CH0                      (20u)
+#define PDM_RX_CH1                      (21u)
+#define PDM_READ_SIZE                   (192)
 
 typedef struct cy_stc_usb_app_ctxt_ cy_stc_usb_app_ctxt_t;
 
@@ -110,12 +113,14 @@ typedef enum cy_en_fpgaConfigMode_t
     PASSIVE_SERIAL_MODE
 }cy_en_fpgaConfigMode_t;
 
+/* FPGA Stream Control*/
 typedef enum cy_en_streamControl_t
 {
     STOP,
     START
 }cy_en_streamControl_t;
-/*
+
+/* 
  * USB application data structure which is bridge between USB system and device
  * functionality.
  * It maintains some usb system information which comes from USBD and it also
@@ -174,8 +179,6 @@ struct cy_stc_usb_app_ctxt_
     QueueHandle_t uacMsgQueue;                  /** Handle to UAC application message queue. */
     TimerHandle_t pdmActivateTimer;             /** Handle of timer used to activate PDM channels. */
 
-    /* DMA RAM buffer location. */
-    uint32_t epDmaBufSpace[RAM_BUF_SZ_WORDS];
     /* Index of the next free DMA RAM buffer location. */
     uint32_t dmaBufFreeIdx;
 #endif /* AUDIO_IF_EN */
@@ -276,123 +279,424 @@ typedef enum cy_en_i2c_fpgaRegMap_t
 
 } cy_en_i2c_fpgaRegMap_t;
 
-
+/**
+ * \name Cy_USB_AppInit
+ * \brief   This function Initializes application related data structures, register callback
+ *          creates task for device function.
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD layer Context pointer
+ * \param pCpuDmacBase DMAC base address
+ * \param pCpuDw0Base DataWire 0 base address
+ * \param pCpuDw1Base DataWire 1 base address
+ * \param pHbDmaMgrCtxt HBDMA Manager Context
+ * \retval None
+ */
 void Cy_USB_AppInit(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, 
                     DMAC_Type *pCpuDmacBase, DW_Type *pCpuDw0Base, DW_Type *pCpuDw1Base, 
                     cy_stc_hbdma_mgr_context_t *pHbDmaMgrCtxt);
 
+/**
+ * \name Cy_UVC_DeviceTaskHandler
+ * \brief This function handles streaming UVC Device.
+ * \param pTaskParam task param
+ * \note    The actual data forwarding from sensor to USB host is done from the DMA and GPIF callback
+ *          functions. The thread is only responsible for checking for streaming start/stop conditions.
+ * \retval None
+ */
+void Cy_UVC_DeviceTaskHandler(void *pTaskParam);
+
+/**
+ * \name Cy_USB_AppRegisterCallback
+ * \brief This function will register all calback with USBD layer.
+ * \param pAppCtxt application layer context pointer.
+ * \retval None
+ */
 void Cy_USB_AppRegisterCallback(cy_stc_usb_app_ctxt_t *pAppCtxt);
 
-void Cy_USB_AppSetCfgCallback(void *pAppCtxt,
-                              cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                              cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppBusResetCallback(void *pAppCtxt,
-                                cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                                cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppBusResetDoneCallback(void *pAppCtxt,
-                                    cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                                    cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppBusSpeedCallback(void *pAppCtxt,
-                                cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                                cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppSetupCallback(void *pAppCtxt,
-                             cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                             cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppSuspendCallback(void *pAppCtxt,
-                               cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                               cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppResumeCallback (void *pAppCtxt,
-                               cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                               cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppSetIntfCallback(void *pAppCtxt,
-                               cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                               cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppL1SleepCallback(void *pUsbApp,
-                               cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                               cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppL1ResumeCallback(void *pUsbApp,
-                                cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                                cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppZlpCallback(void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                           cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppSlpCallback(void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                           cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppSetFeatureCallback(void *pUsbApp,
-                                  cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                                  cy_stc_usb_cal_msg_t *pMsg);
-void Cy_USB_AppClearFeatureCallback(void *pUsbApp,
-                                  cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
-                                  cy_stc_usb_cal_msg_t *pMsg);
-/* Function to register all USB descriptors with the stack. */
-void Cy_USB_RegisterUsbDescriptors(cy_stc_usb_app_ctxt_t *pAppCtxt,
-                                    cy_en_usb_speed_t usbSpeed);
-void Cy_USB_AppQueueRead (cy_stc_usb_app_ctxt_t *pAppCtxt,
-        uint8_t endpNumber, uint8_t *pBuffer, uint16_t dataSize);
-uint16_t Cy_USB_AppReadShortPacket(cy_stc_usb_app_ctxt_t *pAppCtxt,
-        uint8_t endpNumber, uint16_t pktSize);
-void Cy_USB_AppQueueWrite (cy_stc_usb_app_ctxt_t *pAppCtxt,
-        uint8_t endpNumber, uint8_t *pBuffer, uint16_t dataSize);
-void Cy_USB_AppInitDmaIntr(uint32_t endpNumber,
-        cy_en_usb_endp_dir_t endpDirection,
-        cy_israddress userIsr);
-void Cy_USB_AppClearDmaInterrupt(cy_stc_usb_app_ctxt_t *pAppCtxt,
-        uint32_t endpNumber, cy_en_usb_endp_dir_t endpDirection);
+/**
+ * \name Cy_USB_AppSetCfgCallback
+ * \brief Callback function will be invoked by USBD when set configuration is received
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD layer context pointer.
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppSetCfgCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppBusResetCallback
+ * \brief Callback function will be invoked by USBD when bus detects RESET
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD layer context pointer
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppBusResetCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppBusResetDoneCallback
+ * \brief Callback function will be invoked by USBD when RESET is completed
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD layer context pointer
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppBusResetDoneCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppBusSpeedCallback
+ * \brief   Callback function will be invoked by USBD when speed is identified or
+ *          speed change is detected
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppBusSpeedCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppSetupCallback
+ * \brief Callback function will be invoked by USBD when SETUP packet is received
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppSetupCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppSuspendCallback
+ * \brief Callback function will be invoked by USBD when Suspend signal/message is detected
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppSuspendCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppResumeCallback
+ * \brief Callback function will be invoked by USBD when Resume signal/message is detected
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppResumeCallback (void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppSetIntfCallback
+ * \brief Callback function will be invoked by USBD when SET_INTERFACE is  received
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppSetIntfCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppL1SleepCallback
+ * \brief This Function will be called by USBD layer when L1 Sleep message comes.
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppL1SleepCallback(void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppL1ResumeCallback
+ * \brief This Function will be called by USBD layer when L1 Resume message comes.
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppL1ResumeCallback(void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppZlpCallback
+ * \brief This Function will be called by USBD layer when ZLP message comes
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppZlpCallback(void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppSlpCallback
+ * \brief This Function will be called by USBD layer when SLP message comes.
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppSlpCallback(void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppSetFeatureCallback
+ * \brief This Function will be called by USBD layer when set feature message comes.
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppSetFeatureCallback(void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppClearFeatureCallback
+ * \brief This Function will be called by USBD layer when clear feature message comes.
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD context
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppClearFeatureCallback(void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppSetAddressCallback
+ * \brief This Function will be called by USBD layer when a USB address has been assigned to the device.
+ * \param pAppCtxt application layer context pointer.
+ * \param pUsbdCtxt USBD layer context pointer.
+ * \param pMsg USB Message
+ * \retval None
+ */
+void Cy_USB_AppSetAddressCallback (void *pUsbApp, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, cy_stc_usb_cal_msg_t *pMsg);
+
+/**
+ * \name Cy_USB_AppQueueWrite
+ * \brief Queue USBHS Write on the USB endpoint
+ * \param pAppCtxt application layer context pointer.
+ * \param endpNumber Endpoint number
+ * \param pBuffer Data Buffer Pointer
+ * \param dataSize DataSize to send on USB bus
+ * \retval None
+ */
+void Cy_USB_AppQueueWrite (cy_stc_usb_app_ctxt_t *pAppCtxt, uint8_t endpNumber, uint8_t *pBuffer, uint16_t dataSize);
+
+/**
+ * \name Cy_USB_AppInitDmaIntr
+ * \brief Function to register an ISR for the DMA channel associated with an endpoint
+ * \param endpNumber USB endpoint number
+ * \param endpDirection Endpoint direction
+ * \param userIsr ISR function pointer. Can be NULL if interrupt is to be disabled.
+ * \retval None
+ */
+void Cy_USB_AppInitDmaIntr(uint32_t endpNumber, cy_en_usb_endp_dir_t endpDirection, cy_israddress userIsr);
+
+/**
+ * \name Cy_USB_AppClearDmaInterrupt
+ * \brief Clear DMA Interrupt
+ * \param pAppCtxt application layer context pointer.
+ * \param endpNumber Endpoint number
+ * \param endpDirection Endpoint direction
+ * \retval None
+ */
+void Cy_USB_AppClearDmaInterrupt(cy_stc_usb_app_ctxt_t *pAppCtxt, uint32_t endpNumber, cy_en_usb_endp_dir_t endpDirection);
+
+/**
+ * \name CyUvcAppHandleSendCompletion
+ * \details Function that handles DMA transfer completion on the USB-HS BULK-IN
+ *          endpoint. This is equivalent to the receipt of a consume event in the USB-SS use
+ *          case and we can discard the active data buffer on the LVDS side.
+ * \param pAppCtxt application layer context pointer.
+ * \retval None
+ */
 void CyUvcAppHandleSendCompletion(cy_stc_usb_app_ctxt_t *pUsbApp);
 
+/**
+ * \name CY_UVC_DataWire_ISR
+ * \brief Interrupt handler for the UVC Channel.
+ * \retval None
+ */
 void CY_UVC_DataWire_ISR(void);
 
-/* Enable the USB data connection. */
+/**
+ * \name Cy_USB_EnableUsbHSConnection
+ * \brief Enable USBHS connection
+ * \param pAppCtxt Pointer to UVC application context structure.
+ * \retval None
+ */
 bool Cy_USB_EnableUsbHSConnection(cy_stc_usb_app_ctxt_t *pAppCtxt);
 
-/* Disable the USB data connection. */
-void Cy_USB_DisableUsbHSConnection(cy_stc_usb_app_ctxt_t *pAppCtxt);
+/**
+ * \name Cy_USB_DisableUsbHSConnection
+ * \brief Diable USBHS connection
+ * \retval None
+ */
+void Cy_USB_DisableUsbHSConnection (cy_stc_usb_app_ctxt_t *pAppCtxt);
 
-/* Initialize the LVDS/LVCMOS interface to receive the video data through. */
+/**
+ * \name Cy_UVC_LvdsInit
+ * \brief   Initialize the LVDS interface. Currently, only the SIP #0 is being initialized
+ *          and configured to allow transfers into the HBW SRAM through DMA.
+ * \retval None
+ */
 void Cy_UVC_LvdsInit(void);
 
-/* Configure USB endpoints based on the settings provided in the endpoint descriptor. */
+/**
+ * \name Cy_USB_AppConfigureEndp
+ * \brief Configure all endpoints used by application (except EP0)
+ * \param pUsbdCtxt USBD layer context pointer
+ * \param pEndpDscr Endpoint descriptor pointer
+ * \retval None
+ */
 void Cy_USB_AppConfigureEndp(cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint8_t *pEndpDscr);
 
-/* Configure application level DMA resources corresponding to a USB endpoint. */
+/**
+ * \name Cy_USB_AppSetupEndpDmaParamsHs
+ * \brief Configure and enable HBW DMA channels.
+ * \param pAppCtxt application layer context pointer.
+ * \param pEndpDscr Endpoint descriptor pointer
+ * \retval None
+ */
 void Cy_USB_AppSetupEndpDmaParamsHs(cy_stc_usb_app_ctxt_t *pUsbApp, uint8_t *pEndpDscr);
 
-/* Initialize the PDM IP to receive data from PDM microphone. */
+/**
+ * \name Cy_UAC_PdmInit
+ * \brief Initialize the PDM module as required for the USB audio class interface.
+ * \retval None
+ */
 void Cy_UAC_PdmInit(void);
 
-/* De-initialize the PDM IP. */
+/**
+ * \name Cy_UAC_PdmDeInit
+ * \brief Disable the PDM receive functionality when the audio stream is stopped.
+ * \retval None
+ */
 void Cy_UAC_PdmDeInit(void);
 
-/* Enable or disable the interrupt handlers for the DataWire channels reading
- * data out from the PDM receive FIFOs.
+/**
+ * \name Cy_USB_App_PDM_InitDmaIntr
+ * \brief   Enable or disable the interrupt handlers for the DataWire channels reading
+ *          data out from the PDM receive FIFOs.
+ * \param enable Whether the interrupts are to be enabled or disabled.
+ * \retval None
  */
 void Cy_USB_App_PDM_InitDmaIntr(bool enable);
 
-/* Interrupt service routine for completion of data transfer on USB 2.x
- * IN endpoint used for audio streaming.
+/**
+ * \name Cy_PDM_InEpDma_ISR
+ * \brief   Interrupt service routine for completion of data transfer on USB 2.x
+ *          IN endpoint used for audio streaming.
+ * \retval None
  */
 void Cy_PDM_InEpDma_ISR(void);
 
-/* Initialize UAC application context structures. */
+/**
+ * \name Cy_UVC_DataWire1Combined_ISR
+ * \brief Combined Interrupt handler for the Datawire1 Channels.
+ * \retval None
+ */
+void Cy_UVC_DataWire1Combined_ISR (void);
+
+/**
+ * \name PDM_CH0_RX_ISR
+ * \brief   Interrupt service routine for the DataWire channel reading from PDM
+ *          Channel-0 RX FIFO.
+ * \retval None
+ */
+void PDM_CH0_RX_ISR (void);
+
+/**
+ * \name PDM_CH1_RX_ISR
+ * \brief   Interrupt service routine for the DataWire channel reading from PDM
+ *          Channel-1 RX FIFO.
+ * \retval None
+ */
+void PDM_CH1_RX_ISR (void);
+
+/**
+ * \name Cy_UAC_AppInit
+ * \brief Perform all UAC specific application initialization.
+ * \param pAppCtxt Handle to the application context data structure.
+ * \retval None
+ */
 void Cy_UAC_AppInit(cy_stc_usb_app_ctxt_t *pAppCtxt);
 
-/* Queue a read using DataWire channels from the PDM receive FIFO. */
+/**
+ * \name Cy_PDM_QueuePDMRead
+ * \brief   Initiate DataWire transfer to read data from PDM receive FIFO(s) to RAM
+ *          buffers allocated as part of DMA channels.
+ * \param pAppCtxt Pointer to application context structure.
+ * \param dataLength Length of data (in bytes) to read from each RX FIFO.
+ * \retval None
+ */
 void Cy_PDM_QueuePDMRead(cy_stc_usb_app_ctxt_t *pAppCtxt, uint32_t dataLength);
 
-/* Handler for SET_INTERFACE requests addressed to the UAC streaming interface. */
+/**
+ * \name Cy_App_SetUACIntfHandler
+ * \brief Set Interface request handler for the UAC audio streaming interface.
+ * \param pAppCtxt Pointer to the application context structure.
+ * \param altSetting Selected alternate setting for the audio streaming interface.
+ * \retval None
+ */
 void Cy_App_SetUACIntfHandler(cy_stc_usb_app_ctxt_t *pAppCtxt, uint8_t altSetting);
 
+/**
+ * \name CyUvcAppGpifIntr
+ * \brief GPIF error handler
+ * \param pAppCtxt application layer context pointer
+ * \retval None
+ */
 void CyUvcAppGpifIntr(void *pApp);
 
+/**
+ * \name Cy_USB_App_FreeAllDmaBuffers
+ * \brief Clears all DMA buffer allocations made from the application context
+ * \param pAppCtxt application layer context pointer
+ * \retval None
+ */
 void Cy_USB_App_FreeAllDmaBuffers(cy_stc_usb_app_ctxt_t *pAppCtxt);
-
+/**
+ * \name Cy_USB_App_FreeAllDmaBuffers
+ * \brief Obtain a HBDMA (SRAM) buffer of specified size for DMA data transfers.
+ * \param pAppCtxt application layer context pointer
+ * \retval Pointer to buffer, NULL in case of error.
+ */
 uint8_t *Cy_USB_App_GetDmaBuffer(cy_stc_usb_app_ctxt_t *pAppCtxt, uint16_t sz_bytes);
 
-void Cy_CheckStatus(const char *function, uint32_t line, uint8_t condition,uint32_t value, uint8_t isBlocking);
+/**
+ * \name Cy_USB_RegisterUsbDescriptors
+ * \brief Function to register USB descriptors to USBD 
+ * \param pAppCtxt application layer context pointer.
+ * \param usbSpeed USB device Speed
+ * \return None
+ */
+void Cy_USB_RegisterUsbDescriptors(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_usb_speed_t usbSpeed);
 
-void Cy_USB_SendEndp0DataFailHandler(void);
+/**
+ * \name Cy_CheckStatus
+ * \brief Function that handles prints error log
+ * \param function Pointer to function
+ * \param line Line number where error is seen
+ * \param condition condition of failure
+ * \param value error code
+ * \param isBlocking blocking function
+ * \retval None
+ */
+void Cy_CheckStatus(const char *function, uint32_t line, uint8_t condition, uint32_t value, uint8_t isBlocking);
 
+/**
+ * \name Cy_CheckStatusHandleFailure
+ * \brief Function that handles prints error log
+ * \param function Pointer to function
+ * \param line LineNumber where error is seen
+ * \param condition Line number where error is seen
+ * \param value error code
+ * \param isBlocking blocking function
+ * \param failureHandler failure handler function
+ * \retval None
+ */
 void Cy_CheckStatusHandleFailure(const char *function, uint32_t line, uint8_t condition, uint32_t value, uint8_t isBlocking, void (*failureHandler)());
 
+/**
+ * \name Cy_FailHandler
+ * \brief Error Handler
+ * \retval None
+ */
+void Cy_FailHandler(void);
 #if defined(__cplusplus)
 }
 #endif

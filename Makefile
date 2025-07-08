@@ -50,20 +50,13 @@ APPNAME=mtb-example-fx2g3-uvc-uac
 
 # Name of toolchain to use. Options include:
 #
-# GCC_ARM -- GCC provided with ModusToolbox software
+# GCC_ARM -- GCC is available as part of ModusToolbox Setup program
 # ARM     -- ARM Clang Compiler (must be installed separately)
 #
 # To use the ARM toolchain, ensure the CY_COMPILER_ARM_DIR environment variable is set to the compiler's directory (absolute path).
-# For example, the default path for ARMCLANG from a Keil installation is typically C:/Keil_v5/ARM/ARMCLANG.
 #
 # See also: CY_COMPILER_PATH below
 TOOLCHAIN=GCC_ARM
-
-# Generate Bootloader enabled hex. Options include:
-#
-# yes -- Hex with bootloader region
-# no  -- Hex without bootloader region
-BLENABLE ?= yes
 
 # Generate hex compatible with REV2 Options include:
 #
@@ -87,7 +80,15 @@ VERBOSE=
 # Name of CORE to use. Options include:
 #
 # CM4  -- Cortex M4
-CORE=CM4
+# CM0P -- Cortex M0+
+CORE ?= CM4
+
+# Generate Bootloader enabled hex. Options include:
+#
+# yes -- Hex with bootloader region
+# no  -- Hex without bootloader region
+BLENABLE ?= yes
+
 
 ################################################################################
 # Advanced Configuration
@@ -121,7 +122,8 @@ INCLUDES=
 # Add additional defines to the build process (without a leading -D).
 DEFINES= \
         FX2G3_EN=1 \
-        CYUSB4014_BZXI=1 \
+		LVCMOS_16BIT_SDR=1 \
+        CYUSB2318_BF104AXI=1 \
         BCLK__BUS_CLK__HZ=75000000 \
         DEBUG_INFRA_EN=1 \
         FREERTOS_ENABLE=1 \
@@ -135,10 +137,8 @@ DEFINES= \
         STEREO_ENABLE=0
 
 # Conditionally append BLOAD_ENABLE=1 if BLENABLE is set to yes
-ifneq ($(BLENABLE),)
-ifneq ($(BLENABLE), no)
+ifeq ($(BLENABLE), yes)
     DEFINES += BLOAD_ENABLE=1
-endif
 endif
 
 ifeq ($(REV02), yes)
@@ -148,22 +148,36 @@ else
 endif
 
 # Select softfp or hardfp floating point. Default is softfp.
-ifeq ($(TOOLCHAIN), GCC_ARM)
-    VFP_SELECT= softfp
-else ifeq ($(TOOLCHAIN), ARM)
-    VFP_SELECT= soft
+ifeq ($(CORE), CM4)
+	ifeq ($(TOOLCHAIN), GCC_ARM)
+	    VFP_SELECT= softfp
+	else ifeq ($(TOOLCHAIN), ARM)
+	    VFP_SELECT= soft
+	endif
+else ifeq ($(CORE), CM0P)
+	VFP_SELECT=
 endif
 
 # Additional / custom C compiler flags.
 #
 # NOTE: Includes and defines should use the INCLUDES and DEFINES variable
 # above.
-ifeq ($(TOOLCHAIN), GCC_ARM)
-    CFLAGS= -Os -Og -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -ffunction-sections -fdata-sections -g
-else ifeq ($(TOOLCHAIN), ARM)
-    CFLAGS= -Os -Og -mcpu=Cortex-M4 -mfpu=fpv4-sp-d16 -mthumb -ffunction-sections -fdata-sections -g \
-            --target=arm-arm-none-eabi -fno-rtti -fno-exceptions -Wno-error -fshort-wchar -fshort-enums
+ifeq ($(CORE), CM4)
+	ifeq ($(TOOLCHAIN), GCC_ARM)
+	    CFLAGS= -Os -Og -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -ffunction-sections -fdata-sections -g
+	else ifeq ($(TOOLCHAIN), ARM)
+	    CFLAGS= -Os -Og -mcpu=Cortex-M4 -mfpu=fpv4-sp-d16 -mthumb -ffunction-sections -fdata-sections -g \
+	            --target=arm-arm-none-eabi -fno-rtti -fno-exceptions -Wno-error -fshort-wchar -fshort-enums
+	endif
+else ifeq ($(CORE), CM0P)
+	ifeq ($(TOOLCHAIN), GCC_ARM)
+	    CFLAGS= -Os -Og -mcpu=cortex-m0plus -mthumb -ffunction-sections -fdata-sections -g
+	else ifeq ($(TOOLCHAIN), ARM)
+	    CFLAGS= -Os -Og -mcpu=Cortex-M0plus -mthumb -ffunction-sections -fdata-sections -g \
+	            --target=arm-arm-none-eabi -fno-rtti -fno-exceptions -Wno-error -fshort-wchar -fshort-enums
+	endif
 endif
+
 
 # Additional / custom C++ compiler flags.
 #
@@ -178,10 +192,18 @@ CXXFLAGS=
 ASFLAGS=
 
 # Additional / custom linker flags.
-ifeq ($(TOOLCHAIN), ARM)
-    LDFLAGS=--cpu=Cortex-M4 --entry=Reset_Handler --diag_suppress=L6329W,L6314W
-else ifeq ($(TOOLCHAIN), GCC_ARM)
-    LDFLAGS=-Wl,--start-group -mcpu=cortex-m4 -mthumb --entry=Reset_Handler -Wl,--gc-sections -g -ffunction-sections -finline-functions -Os -Wl,--end-group
+ifeq ($(CORE), CM4)
+	ifeq ($(TOOLCHAIN), GCC_ARM)
+	    LDFLAGS=-Wl,--start-group -mcpu=cortex-m4 -mthumb --entry=Reset_Handler -Wl,--gc-sections -g -ffunction-sections -finline-functions -Os -Wl,--end-group
+	else ifeq ($(TOOLCHAIN), ARM)
+	    LDFLAGS=--cpu=Cortex-M4 --entry=Reset_Handler --diag_suppress=L6329W,L6314W 
+	endif
+else ifeq ($(CORE), CM0P)
+	ifeq ($(TOOLCHAIN), GCC_ARM)
+	    LDFLAGS=-Wl,--start-group -mcpu=cortex-m0plus -mthumb --entry=Reset_Handler -Wl,--gc-sections -g -ffunction-sections -finline-functions -Os -Wl,--end-group
+	else ifeq ($(TOOLCHAIN), ARM)
+	    LDFLAGS=--cpu=Cortex-M0plus --entry=Reset_Handler --diag_suppress=L6329W,L6314W
+	endif
 endif
 
 # Additional / custom libraries to link in to the application.
@@ -196,27 +218,33 @@ ifeq ($(CORE),CM4)
         # Use dual linker script for CM4 core
         LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),fx_cm4.ld,fx_cm4_dual.sct)
     endif
+else ifeq ($(CORE),CM0P)
+	ifeq ($(BLENABLE), yes)
+		# Use loadable linker script for CM0P core
+		LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),fx_cm0plus_loadable.ld,fx_cm0plus_loadable.sct)
+	else
+		# Use linker script for CM0P core
+    	LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),fx_cm0plus.ld,fx_cm0plus.sct)
+    endif
 endif
-
 
 # Custom pre-build commands to run.
 PREBUILD=
 
 # Custom post-build commands to run.
-#Post build to merge bootloader and application
+# Post build instruction to merge bootloader and application
 ifeq ($(BLENABLE), yes)
     POSTBUILD=\
         $(CY_MCUELFTOOL) --sign build/$(TARGET)/$(CONFIG)/$(APPNAME).elf SHA256 --output build/$(TARGET)/$(CONFIG)/$(APPNAME).sha.elf && \
         $(OBJCOPY) -O ihex --gap-fill 0 build/$(TARGET)/$(CONFIG)/$(APPNAME).sha.elf build/$(TARGET)/$(CONFIG)/$(APPNAME).hex
-else
-ifeq ($(TOOLCHAIN), ARM)
-    POSTBUILD=\
-        $(FROMELF) --i32combined --base=0x10000000 -o build/$(TARGET)/$(CONFIG)/$(APPNAME).hex build/$(TARGET)/$(CONFIG)/$(APPNAME).elf
-else
-    POSTBUILD=\
-        $(OBJCOPY) -O ihex build/$(TARGET)/$(CONFIG)/$(APPNAME).elf build/$(TARGET)/$(CONFIG)/$(APPNAME).hex
-endif
-
+else 
+	ifeq ($(TOOLCHAIN), GCC_ARM)
+	    POSTBUILD=\
+	        $(OBJCOPY) -O ihex build/$(TARGET)/$(CONFIG)/$(APPNAME).elf build/$(TARGET)/$(CONFIG)/$(APPNAME).hex
+	else ifeq ($(TOOLCHAIN), ARM)
+	    POSTBUILD=\
+	        $(FROMELF) --i32combined --base=0x10000000 -o build/$(TARGET)/$(CONFIG)/$(APPNAME).hex build/$(TARGET)/$(CONFIG)/$(APPNAME).elf
+	endif
 endif
 
 ################################################################################
@@ -245,9 +273,8 @@ CY_GETLIBS_SHARED_NAME=mtb_shared
 # toolchain used for the build. Refer to the ModusToolbox user guide to get the correct
 # variable name for the toolchain used in your build.
 #
-# The default depends on the selected TOOLCHAIN (GCC_ARM uses the ModusToolbox
-# software provided compiler by default).
-CY_COMPILER_GCC_ARM_DIR=
+# The default path depends on the selected TOOLCHAIN and is set in the Make recipe.
+CY_COMPILER_GCC_ARM_DIR ?=
 
 # Locate ModusToolbox helper tools folders in default installation
 # locations for Windows, Linux, and macOS.
@@ -282,25 +309,10 @@ else
     CY_MCUELFTOOL=$(CY_MCUELFTOOL_DIR)/bin/cymcuelftool
 endif
 
-# Path to OBJCOPY tool directory.
-ifeq ($(TOOLCHAIN), ARM)
-FROMELF_DIR= $(wildcard $(CY_COMPILER_ARM_DIR)/bin)
-endif
+# Path to FROMELF tool.
+FROMELF=$(MTB_TOOLCHAIN_ARM__ELF2BIN)
 
-OBJCOPY_DIR=$(wildcard $(CY_TOOLS_DIR)/gcc/arm-none-eabi/bin)
-
-
-# Path to FROMELF and OBJCOPY tool directory.
-ifeq ($(OS),Windows_NT)
-    ifeq ($(TOOLCHAIN), ARM)
-        FROMELF=$(FROMELF_DIR)/fromelf.exe
-    endif
-    OBJCOPY=$(OBJCOPY_DIR)/objcopy.exe
-else
-    ifeq ($(TOOLCHAIN), ARM)
-        FROMELF=$(FROMELF_DIR)/fromelf
-    endif
-    OBJCOPY=$(OBJCOPY_DIR)/objcopy
-endif
+# Path to OBJCOPY tool.
+OBJCOPY=$(MTB_TOOLCHAIN_GCC_ARM__ELF2BIN)
 
 include $(CY_TOOLS_DIR)/make/start.mk

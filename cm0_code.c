@@ -2,12 +2,12 @@
 * \file cm0_code.c
 * \version 1.0
 *
-* Source file which provides binary content equivalent to the Cortex-M0+ based
-* start-up code which enables the Cortex-M4 processor.
+* \brief    Source file which provides binary content equivalent to the Cortex-M0+ based
+*           start-up code which enables the Cortex-M4 processor.
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -28,7 +28,6 @@
 #include "cy_pdl.h"
 #include <stdint.h>
 
-#if (CY_CPU_CORTEX_M4)
 
 #if BLOAD_ENABLE
 
@@ -36,15 +35,13 @@
 __attribute__ ((section(".cy_app_signature"), used)) const uint8_t cyFx2g3AppSignature[512] = {0};
 
 #if defined (__ARMCC_VERSION)
-/*******************************************************************************
-* Function Name: Cy_AppVerify_MemorySymbols
-****************************************************************************//**
-*
-* The intention of the function is to declare boundaries of the memories for the
-* MDK compilers. For the rest of the supported compilers, this is done using
-* linker configuration files. The following symbols used by the cymcuelftool.
-*
-*******************************************************************************/
+/**
+ * \name Cy_AppVerify_MemorySymbols
+ * \details The intention of the function is to declare boundaries of the memories for the
+ *          MDK compilers. For the rest of the supported compilers, this is done using
+ *          linker configuration files. The following symbols used by the cymcuelftool.
+ * \retval None
+ */
 void Cy_AppVerify_MemorySymbols (void)
 {
     __asm (
@@ -57,6 +54,12 @@ void Cy_AppVerify_MemorySymbols (void)
     );
 }
 #endif /* defined (__ARMCC_VERSION) */
+
+#endif /* BLOAD_ENABLE */
+
+#if (CY_CPU_CORTEX_M4)
+
+#if BLOAD_ENABLE
 
 __attribute__ ((section(".cm0_code"), used))
 const uint32_t Cm0Code[256] = {
@@ -197,7 +200,6 @@ const uint32_t Cm0Code[256] = {
 };
 
 #endif /* BLOAD_ENABLE */
-
-#endif /* CY_CPU_CORTEX_M4 */
+#endif /* (CY_CPU_CORTEX_M4) */
 
 /*[]*/

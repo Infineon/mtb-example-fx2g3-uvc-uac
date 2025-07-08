@@ -2,12 +2,12 @@
 * \file cy_uac_app.c
 * \version 1.0
 *
-* Implements the USB audio data handling in the FX2G3 integrated USB Video+Audio
-* application.
+* \brief    Implements the USB audio data handling in the FX2G3 integrated USB Video+Audio
+*           application.
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -35,7 +35,6 @@
 #include "usb_uvc_device.h"
 #include "usb_app.h"
 #include "cy_debug.h"
-
 #if AUDIO_IF_EN
 
 /* Set to 1 to enable internal test data generation instead of connection to the PDM microphone. */
@@ -59,18 +58,11 @@ static cy_stc_dma_descriptor_t glPDMReadDmaDesc0;
 static cy_stc_dma_descriptor_t glPDMReadDmaDesc1;
 #endif /* STEREO_ENABLE */
 
-/*****************************************************************************
- * Function Name: Cy_UAC_PdmInit
- *****************************************************************************
- * Summary
- *  Initialize the PDM module as required for the USB audio class interface.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_UAC_PdmInit
+ * \brief Initialize the PDM module as required for the USB audio class interface.
+ * \retval None
+ */
 void Cy_UAC_PdmInit (void)
 {
     cy_stc_gpio_pin_config_t pinCfg;
@@ -157,18 +149,11 @@ void Cy_UAC_PdmInit (void)
 #endif /* PDM_TEST_GEN_EN */
 }
 
-/*****************************************************************************
- * Function Name: Cy_UAC_PdmDeInit
- *****************************************************************************
- * Summary
- *  Disable the PDM receive functionality when the audio stream is stopped.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_UAC_PdmDeInit
+ * \brief Disable the PDM receive functionality when the audio stream is stopped.
+ * \retval None
+ */
 void Cy_UAC_PdmDeInit (void)
 {
     Cy_PDM_PCM_DeActivate_Channel(PDM0, 0);
@@ -182,19 +167,13 @@ void Cy_UAC_PdmDeInit (void)
 #endif /* STEREO_ENABLE */
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_PDMDmaReadCompletion
- *****************************************************************************
- * Summary
- *  Handle the completion of DMA transfer from PDM Receive FIFO into RAM
- *  buffers.
- *
- * Parameters:
- *  pAppCtxt: Pointer to application context structure.
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_USB_PDMDmaReadCompletion
+ * \brief   Handle the completion of DMA transfer from PDM Receive FIFO into RAM
+ *          buffers.
+ * \param pAppCtxt Pointer to application context structure.
+ * \retval None
+ */
 static void Cy_USB_PDMDmaReadCompletion (cy_stc_usb_app_ctxt_t *pAppCtxt)
 {
     BaseType_t status;
@@ -208,19 +187,13 @@ static void Cy_USB_PDMDmaReadCompletion (cy_stc_usb_app_ctxt_t *pAppCtxt)
     (void)xHigherPriorityTaskWoken;
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_PDMDmaWriteCompletion
- *****************************************************************************
- * Summary
- *  Handle the completion of DMA transfer of audio data from RAM buffer into
- *  the USB 2.x EPM buffers.
- *
- * Parameters:
- *  pAppCtxt: Pointer to application context structure.
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_USB_PDMDmaWriteCompletion
+ * \brief   Handle the completion of DMA transfer of audio data from RAM buffer into
+ *          the USB 2.x EPM buffers.
+ * \param pAppCtxt Pointer to application context structure.
+ * \retval None
+ */
 static void Cy_USB_PDMDmaWriteCompletion (cy_stc_usb_app_ctxt_t *pAppCtxt)
 {
     BaseType_t status;
@@ -237,19 +210,12 @@ static void Cy_USB_PDMDmaWriteCompletion (cy_stc_usb_app_ctxt_t *pAppCtxt)
     (void)xHigherPriorityTaskWoken;
 }
 
-/*****************************************************************************
- * Function Name: PDM_CH1_RX_ISR
- *****************************************************************************
- * Summary
- *  Interrupt service routine for the DataWire channel reading from PDM
- *  Channel-1 RX FIFO.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name PDM_CH1_RX_ISR
+ * \brief   Interrupt service routine for the DataWire channel reading from PDM
+ *          Channel-1 RX FIFO.
+ * \retval None
+ */
 void PDM_CH1_RX_ISR(void)
 {
     /* Clear the interrupt. */
@@ -265,23 +231,16 @@ void PDM_CH1_RX_ISR(void)
     }
 }
 
-/*****************************************************************************
- * Function Name: PDM_CH0_RX_ISR
- *****************************************************************************
- * Summary
- *  Interrupt service routine for the DataWire channel reading from PDM
- *  Channel-0 RX FIFO.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name PDM_CH0_RX_ISR
+ * \brief   Interrupt service routine for the DataWire channel reading from PDM
+ *          Channel-0 RX FIFO.
+ * \retval None
+ */
 void PDM_CH0_RX_ISR (void)
 {
     /* Clear the interrupt. */
-    Cy_DMA_Channel_ClearInterrupt(appCtxt.pCpuDw1Base, 20u);
+    Cy_DMA_Channel_ClearInterrupt(appCtxt.pCpuDw1Base, PDM_RX_CH0);
 
     /* Check if the transfer on the Channel-1 has also been completed. Notify
      * application thread if all transfers are complete.
@@ -293,19 +252,12 @@ void PDM_CH0_RX_ISR (void)
     }
 }
 
-/*****************************************************************************
- * Function Name: Cy_PDM_InEpDma_ISR
- ******************************************************************************
- * Summary:
- *  Interrupt service routine for completion of data transfer on USB 2.x
- *  IN endpoint used for audio streaming.
- *
- * Parameters:
- *  void
- *
- * Return:
- *  void
- *****************************************************************************/
+/**
+ * \name Cy_PDM_InEpDma_ISR
+ * \brief   Interrupt service routine for completion of data transfer on USB 2.x
+ *          IN endpoint used for audio streaming.
+ * \retval None
+ */
 void Cy_PDM_InEpDma_ISR (void)
 {
     Cy_USB_AppClearDmaInterrupt(&appCtxt, UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN);
@@ -313,19 +265,13 @@ void Cy_PDM_InEpDma_ISR (void)
     portYIELD_FROM_ISR(true);
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_App_PDM_InitDmaIntr
- ******************************************************************************
- * Summary:
- *  Enable or disable the interrupt handlers for the DataWire channels reading
- *  data out from the PDM receive FIFOs.
- *
- * Parameters:
- *  enable: Whether the interrupts are to be enabled or disabled.
- *
- * Return:
- *  void
- *****************************************************************************/
+/**
+ * \name Cy_USB_App_PDM_InitDmaIntr
+ * \brief   Enable or disable the interrupt handlers for the DataWire channels reading
+ *          data out from the PDM receive FIFOs.
+ * \param enable Whether the interrupts are to be enabled or disabled.
+ * \retval None
+ */
 void Cy_USB_App_PDM_InitDmaIntr (bool enable)
 {
     cy_stc_sysint_t intrCfg;
@@ -337,26 +283,33 @@ void Cy_USB_App_PDM_InitDmaIntr (bool enable)
 #if CY_CPU_CORTEX_M4
         intrCfg.intrSrc = (IRQn_Type)(cpuss_interrupts_dw1_20_IRQn);
         intrCfg.intrPriority = 5; 
-#else
-        intrCfg.intrSrc = NvicMux6_IRQn;
-        intrCfg.intrPriority = 1;
-        intrCfg.cm0pSrc = cpuss_interrupts_dw1_20_IRQn;
-#endif 
         /* Interrupt for DataWire channel reading from PDM RX0 FIFO. */
         Cy_SysInt_Init(&intrCfg, PDM_CH0_RX_ISR);
         NVIC_EnableIRQ(intrCfg.intrSrc);
+#else
+        intrCfg.intrSrc = NvicMux1_IRQn;
+        intrCfg.intrPriority = 1;
+        intrCfg.cm0pSrc = cpuss_interrupts_dw1_20_IRQn;
+        /* Interrupt for DataWire channel reading from PDM RX0 FIFO. */
+        Cy_SysInt_Init(&intrCfg, Cy_UVC_DataWire1Combined_ISR);
+        NVIC_EnableIRQ(intrCfg.intrSrc);
+#endif /* CY_CPU_CORTEX_M4 */
+
 
 #if STEREO_ENABLE
 #if CY_CPU_CORTEX_M4
         intrCfg.intrSrc = (IRQn_Type)(cpuss_interrupts_dw1_21_IRQn);
         intrCfg.intrPriority = 5; 
-#else
-        intrCfg.intrSrc = NvicMux2_IRQn;
-        intrCfg.intrPriority = 1;
-        intrCfg.cm0pSrc = cpuss_interrupts_dw1_20_IRQn;
-#endif 
         Cy_SysInt_Init(&intrCfg, PDM_CH1_RX_ISR);
         NVIC_EnableIRQ(intrCfg.intrSrc);
+#else
+        intrCfg.intrSrc = NvicMux1_IRQn;
+        intrCfg.intrPriority = 1;
+        intrCfg.cm0pSrc = cpuss_interrupts_dw1_21_IRQn;
+        Cy_SysInt_Init(&intrCfg, Cy_UVC_DataWire1Combined_ISR);
+        NVIC_EnableIRQ(intrCfg.intrSrc);
+#endif /* CY_CPU_CORTEX_M4 */
+
 #endif /* STEREO_ENABLE */
     } else {
         DBG_APP_INFO("Disabling PDM DW ISRs\r\n");
@@ -368,20 +321,16 @@ void Cy_USB_App_PDM_InitDmaIntr (bool enable)
     }
 }
 
-/*****************************************************************************
- * Function Name: PDMChannelActivateTimerCb
- ******************************************************************************
- * Summary:
- *  Activate the PDM receive channels for data transfer. This is done with
- *  a delay from the PDM interface selection so that the host application
- *  starts reading data out before the PDM receive FIFOs start getting filled.
+/**
+ * \name PDMChannelActivateTimerCb
+ * \brief   Activate the PDM receive channels for data transfer. This is done with
+ *          a delay from the PDM interface selection so that the host application
+ *          starts reading data out before the PDM receive FIFOs start getting filled.
+ * \param xTimer: 
+ * Handle of timer trigger the PDM channel activation.
  *
- * Parameters:
- *  xTimer: Handle of timer trigger the PDM channel activation.
- *
- * Return:
- *  void
- *****************************************************************************/
+ * \retval None
+ */
 void PDMChannelActivateTimerCb (TimerHandle_t xTimer)
 {
     Cy_PDM_PCM_Activate_Channel(PDM0, 0);
@@ -390,20 +339,14 @@ void PDMChannelActivateTimerCb (TimerHandle_t xTimer)
 #endif /* STEREO_ENABLE */
 }
 
-/*****************************************************************************
- * Function Name: Cy_PDM_QueuePDMRead
- ******************************************************************************
- * Summary:
- * Initiate DataWire transfer to read data from PDM receive FIFO(s) to RAM
- * buffers allocated as part of DMA channels.
- *
- * Parameters:
- *  pAppCtxt: Pointer to application context structure.
- *  dataLength: Length of data (in bytes) to read from each RX FIFO.
- *
- * Return:
- *  void
- *****************************************************************************/
+/**
+ * \name Cy_PDM_QueuePDMRead
+ * \brief   Initiate DataWire transfer to read data from PDM receive FIFO(s) to RAM
+ *          buffers allocated as part of DMA channels.
+ * \param pAppCtxt Pointer to application context structure.
+ * \param dataLength Length of data (in bytes) to read from each RX FIFO.
+ * \retval None
+ */
 void Cy_PDM_QueuePDMRead (cy_stc_usb_app_ctxt_t *pAppCtxt,
                           uint32_t dataLength)
 {
@@ -425,17 +368,17 @@ void Cy_PDM_QueuePDMRead (cy_stc_usb_app_ctxt_t *pAppCtxt,
     /* If the DMA channel is already enabled, disable it. */
 #if STEREO_ENABLE
     pAppCtxt->pdmPendingDmaFlag = 3;
-    Cy_DMA_Channel_Disable(DW1, 21);
+    Cy_DMA_Channel_Disable(DW1, PDM_RX_CH1);
 #else
     pAppCtxt->pdmPendingDmaFlag = 1;
 #endif /* STEREO_ENABLE */
-    Cy_DMA_Channel_Disable(DW1, 20);
+    Cy_DMA_Channel_Disable(DW1, PDM_RX_CH0);
 
     /*
      * Each PCM sample read from the FIFO is of 16 bits.
      * The PCM FIFO depth is only 64 entries. We read 32 bytes of data (16 samples) out from the FIFO
      * whenever, the FIFO has at least 16 samples of data in it. Three such reads are required to fill
-     * one packet of 96 bytes which will be sent to the USB host as one packet.
+     * one packet of 192 bytes which will be sent to the USB host as one packet.
      *
      * In stereo mode, we start reading from both RX FIFO in parallel with two different DataWire
      * channels.
@@ -484,44 +427,38 @@ void Cy_PDM_QueuePDMRead (cy_stc_usb_app_ctxt_t *pAppCtxt,
     chan_cfg.enable      = false;
     chan_cfg.bufferable  = false;
 
-    stat = Cy_DMA_Channel_Init(DW1, 20, &chan_cfg);
+    stat = Cy_DMA_Channel_Init(DW1, PDM_RX_CH0, &chan_cfg);
     CY_ASSERT(stat == CY_DMA_SUCCESS);
 
 #if STEREO_ENABLE
     chan_cfg.descriptor  = &glPDMReadDmaDesc1;
     chan_cfg.priority    = 1;
 
-    stat = Cy_DMA_Channel_Init(DW1, 21, &chan_cfg);
+    stat = Cy_DMA_Channel_Init(DW1, PDM_RX_CH1, &chan_cfg);
     CY_ASSERT(stat == CY_DMA_SUCCESS);
 #endif /* STEREO_ENABLE */
 
-    Cy_DMA_Channel_SetInterruptMask(DW1, 20, CY_DMA_INTR_MASK);
+    Cy_DMA_Channel_SetInterruptMask(DW1, PDM_RX_CH0, CY_DMA_INTR_MASK);
 #if STEREO_ENABLE
-    Cy_DMA_Channel_SetInterruptMask(DW1, 21, CY_DMA_INTR_MASK);
+    Cy_DMA_Channel_SetInterruptMask(DW1, PDM_RX_CH1, CY_DMA_INTR_MASK);
 #endif /* STEREO_ENABLE */
 
     /* Enable the DataWire channels. */
-    Cy_DMA_Channel_Enable(DW1, 20);
+    Cy_DMA_Channel_Enable(DW1, PDM_RX_CH0);
 #if STEREO_ENABLE
-    Cy_DMA_Channel_Enable(DW1, 21);
+    Cy_DMA_Channel_Enable(DW1, PDM_RX_CH1);
 #endif /* STEREO_ENABLE */
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_AppPDMSendData
- ******************************************************************************
- * Summary:
- * Function to send the data received from the PDM channels to the USB host
- * through the IN endpoint.
- *
- * Parameters:
- *  pAppCtxt: Pointer to application context structure.
- *  dataBuf_p: Pointer to data buffer.
- *  dataLength: Length of data to be sent.
- *
- * Return:
- *  void
- *****************************************************************************/
+/**
+ * \name Cy_USB_AppPDMSendData
+ * \brief   Function to send the data received from the PDM channels to the USB host
+ *          through the IN endpoint.
+ * \param pAppCtxt Pointer to application context structure.
+ * \param dataBuf_p Pointer to data buffer.
+ * \param dataLength Length of data to be sent.
+ * \retval None
+ */
 void
 Cy_USB_AppPDMSendData (cy_stc_usb_app_ctxt_t *pAppCtxt,
                        uint8_t *dataBuf_p, uint32_t dataLength)
@@ -539,19 +476,13 @@ Cy_USB_AppPDMSendData (cy_stc_usb_app_ctxt_t *pAppCtxt,
     
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_PDMDeviceTaskHandler
- ******************************************************************************
- * Summary:
- *  Function that manages the PDM to USB data transfers for the USB Audio Class
- *  (UAC) interface.
- *
- * Parameters:
- *  pTaskParam: Opaque pointer which points to the application context structure.
- *
- * Return:
- *  void
- *****************************************************************************/
+/**
+ * \name Cy_USB_PDMDeviceTaskHandler
+ * \brief   Function that manages the PDM to USB data transfers for the USB Audio Class
+ *          (UAC) interface.
+ * \param pTaskParam Opaque pointer which points to the application context structure.
+ * \retval None
+ */
 void Cy_USB_PDMDeviceTaskHandler (void *pTaskParam)
 {
     cy_stc_usbd_app_msg_t queueMsg;
@@ -594,7 +525,7 @@ void Cy_USB_PDMDeviceTaskHandler (void *pTaskParam)
                     Cy_SysLib_ExitCriticalSection(intMask);
 
                     /* Queue read from the UART RX FIFO into the next DMA buffer. */
-                    Cy_PDM_QueuePDMRead(pAppCtxt, 96);
+                    Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
                 } else {
                     Cy_SysLib_ExitCriticalSection(intMask);
                 }
@@ -604,7 +535,7 @@ void Cy_USB_PDMDeviceTaskHandler (void *pTaskParam)
                 /* Data has been consumed on USB side and buffer is free now. */
                 if (pAppCtxt->pdmRxFreeBufCount == 0) {
                     /* Queue read from the UART RX FIFO into the next DMA buffer. */
-                    Cy_PDM_QueuePDMRead(pAppCtxt, 96);
+                    Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
                 }
 
                 pAppCtxt->pdmRxFreeBufCount++;
@@ -625,19 +556,13 @@ void Cy_USB_PDMDeviceTaskHandler (void *pTaskParam)
     } while (1);
 }
 
-/*****************************************************************************
- * Function Name: Cy_App_SetUACIntfHandler
- ******************************************************************************
- * Summary:
- *  Set Interface request handler for the UAC audio streaming interface.
- *
- * Parameters:
- *  pAppCtxt: Pointer to the application context structure.
- *  altSetting: Selected alternate setting for the audio streaming interface.
- *
- * Return:
- *  void
- *****************************************************************************/
+/**
+ * \name Cy_App_SetUACIntfHandler
+ * \brief Set Interface request handler for the UAC audio streaming interface.
+ * \param pAppCtxt Pointer to the application context structure.
+ * \param altSetting Selected alternate setting for the audio streaming interface.
+ * \retval None
+ */
 void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
                                uint8_t altSetting)
 {
@@ -671,9 +596,9 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
     else
     {
         /* Disable the DataWire channel and clear corresponding data structures. */
-        Cy_DMA_Channel_Disable(pAppCtxt->pCpuDw1Base, 20);
+        Cy_DMA_Channel_Disable(pAppCtxt->pCpuDw1Base, PDM_RX_CH0);
 #if STEREO_ENABLE
-        Cy_DMA_Channel_Disable(pAppCtxt->pCpuDw1Base, 21);
+        Cy_DMA_Channel_Disable(pAppCtxt->pCpuDw1Base, PDM_RX_CH1);
 #endif /* STEREO_ENABLE */
 
         pAppCtxt->pdmRxFreeBufCount = PDM_APP_BUFFER_CNT;
@@ -752,11 +677,16 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
             
         }
 
+#if CY_CPU_CORTEX_M4
         /* Register interrupt for the DW channel associated with the UAC IN endpoint. */
         Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_PDM_InEpDma_ISR);
+#else
+        /* Register interrupt for the DW channel associated with the UAC IN endpoint. */
+        Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_UVC_DataWire1Combined_ISR);
+#endif /* CY_CPU_CORTEX_M4 */
 
         /* Queue the first read from the PDM receive FIFOs. */
-        Cy_PDM_QueuePDMRead(pAppCtxt, 96);
+        Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
 
         /* Start a timer which will activate the PDM receive channels after some time. */
         xTimerReset(pAppCtxt->pdmActivateTimer, 0);
@@ -765,18 +695,12 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
     DBG_APP_INFO("UAC SetIntf done\r\n");
 }
 
-/*****************************************************************************
- * Function Name: Cy_UAC_AppInit
- ******************************************************************************
- * Summary:
- *  Perform all UAC specific application initialization.
- *
- * Parameters:
- *  pAppCtxt: Handle to the application context data structure.
- *
- * Return:
- *  void
- *****************************************************************************/
+/**
+ * \name Cy_UAC_AppInit
+ * \brief Perform all UAC specific application initialization.
+ * \param pAppCtxt Handle to the application context data structure.
+ * \retval None
+ */
 void Cy_UAC_AppInit (cy_stc_usb_app_ctxt_t *pAppCtxt)
 {
     BaseType_t status;

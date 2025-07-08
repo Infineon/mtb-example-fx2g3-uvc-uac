@@ -2,11 +2,11 @@
 * \file qspi.h
 * \version 1.0
 *
-* Provided API declarations for the QSPI implementation. 
+* \brief Provided API declarations for the QSPI implementation. 
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -38,9 +38,7 @@
 #endif
 
 
-/*****************************************************************************
-*                          SMIF enums
-******************************************************************************/
+/* SMIF Enums */
 typedef enum cy_en_spiFlashType_t
 {
     IFX_SFL = 0x80,
@@ -84,9 +82,7 @@ typedef struct
     uint32_t endSignature;
 }cy_stc_externalFlashMetadata_t;
 
-/*****************************************************************************
-*                          SMIF macros                                       *
-******************************************************************************/
+/* SMIF Macros */
 
 #define FPGA_CONFIG_MODE           (PASSIVE_SERIAL_MODE)
 #define CY_APP_QSPI_METADATA_ADDRESS            (0x00)
@@ -200,148 +196,86 @@ typedef struct
 
 extern cy_stc_smif_context_t qspiContext;
 
-/*****************************************************************************
-* Function Name:Cy_FPGAConfigPins(cy_stc_usb_app_ctxt_t *pAppCtxt
-                                , cy_en_fpgaConfigMode_t mode)
-******************************************************************************
-* Summary:
-* Function to Configure pins for FPGA
-*
-* Parameters:
-*  \param pAppCtxt
-*   User Context
-*  \param mode
-*   FPGA mode
-*
-* Return:
-*  Does not return.
-*****************************************************************************/
+/**
+ * \name Cy_FPGAConfigPins
+ * \brief Function to initialize FPGA configuration pins
+ * \param pAppCtxt application layer context pointer
+ * \param mode fpga configuration mode
+ * \retval void
+ */
 void Cy_FPGAConfigPins(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mode);
 
-/*****************************************************************************
-* Function Name:Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt
-                                , cy_en_fpgaConfigMode_t mode)
-******************************************************************************
-* Summary:
-* Fucntion to configure FPGA
-*
-* Parameters:
-*  \param pAppCtxt
-*   User Context
-*  \param mode
-*   FPGA mode
-*
-* Return:
-*  Does not return.
-*****************************************************************************/
+/**
+ * \name Cy_FPGAConfigure
+ * \brief Function to initialize initiate FPGA configuration
+ * \param pAppCtxt application layer context pointer
+ * \param mode fpga configuration mode
+ * \retval void
+ */
 bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt,cy_en_fpgaConfigMode_t mode);
 
-
-/*****************************************************************************
-* Function Name:Cy_QSPI_ConfigureSMIFPins(bool init)
-******************************************************************************
-* Summary:
-* Function to Configure SMIF pins
-*
-* Parameters:
-*  \param pAppCtxt
-*   User Context
-*  \param init
-*   Initialize
-*
-* Return:
-*  Does not return.
-*****************************************************************************/
+/**
+ * \name Cy_QSPI_ConfigureSMIFPins
+ * \brief Function to configure SMIF pins
+ * \param init initialize SMIF pins if true
+ * \retval void
+ */
 void Cy_QSPI_ConfigureSMIFPins(bool init);
 
 
-/*****************************************************************************
-* Function Name:Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pUsbApp,
-                                cy_stc_hbdma_buf_mgr_t *hbw_bufmgr)
-******************************************************************************
-* Summary:
-* Function to start QSPI block
-*
-* Parameters:
-*  \param pUsbApp
-*   User Context
-*  \param hbw_bufmgr
-*   Pointer to DMA buffer
-*
-* Return:
-*  Does not return.
-*****************************************************************************/
+/**
+ * \name Cy_QSPI_Start
+ * \brief Function to start the QSPI/SMIF block
+ * \param pAppCtxt application layer context pointer
+ * \param hbw_bufmgr HBDMA buffer manager pointer
+ * \retval status
+ */
 void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pUsbApp,cy_stc_hbdma_buf_mgr_t *hbw_bufmgr);
 
-/*****************************************************************************
-* Function Name:Cy_QSPI_ReadID(cy_en_smif_slave_select_t slaveSelect,
-                                     uint8_t *idBuffer)
-******************************************************************************
-* Summary:
-* Function to Read ID from QSPI
-*
-* Parameters:
-*  \param slaveSelect
-*   Slave Select line
-*  \param idBuffer
-*   Pointer to buffer
-*
-* Return:
-*  Does not return.
-*****************************************************************************/
+/**
+ * \name Cy_QSPI_ReadID
+ * \brief Function to Read ID from QSPI
+ * \param slaveSelect Slave Select line
+ * \param idBuffer Pointer to buffer
+ * \retval None
+ */
 void Cy_QSPI_ReadID(cy_en_smif_slave_select_t slaveSelect, uint8_t *idBuffer);
 
-/*****************************************************************************
-* Function Name:Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray, 
-                            uint8_t numAddressBytes)
-******************************************************************************
-* Summary:
-* Function to change address to array
-*
-* Parameters:
-*   \param value
-*   Value to convert to array
-*  \param byteArray
-*   Pointer to array
-*  \param numAddressBytes
-*   Number of bytes in address
-*
-* Return:
-*  returns data
-*****************************************************************************/
+/**
+ * \name Cy_SPI_AddressToArray
+ * \brief Function to change address to array
+ * \param value Value to convert to array
+ * \param byteArray Pointer to array
+ * \param numAddressBytes Number of bytes in address
+ * \retval returns address as array
+ */
 void Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray, uint8_t numAddressBytes);
 
-/*****************************************************************************
-* Function Name:Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex))
-******************************************************************************
-* Summary:
-* Function to handler QSPI Vendor commands
-*
-* Parameters:
-*   \param flashIndex
-*   Flash Index
-*
-* Return:
-*  returns 0 if Flash is not busy
-*****************************************************************************/
+/**
+ * \name Cy_QSPI_IsMemBusy
+ * \brief Function to check if Write In Progress (WIP) bit of the flash is cleared
+ * \param flashIndex SPI Flash Index
+ * \retval status
+ */
 bool Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex);
 
-
-/*****************************************************************************
-* Function Name:Cy_SPI_FlashInit(cy_en_flash_index_t flashIndex, bool qpiEnable)
-******************************************************************************
-* Summary:
-* Function to handler QSPI Vendor commands
-*
-* Parameters:
-*   \param flashIndex
-*   Flash Index
-*   \param qpiEnable
-*   Enable QPI Mode
-*
-* Return:
-*  returns cy_en_smif_status_t
-*****************************************************************************/
+/**
+ * \name Cy_SPI_FlashInit
+ * \brief Function to initialize SPI Flash
+ * \details
+ * Quad Mode - Data in x4 mode, Command in x1 mode
+ * QPI Mode - Data in x4 mode, Command in x4 mode
+ *
+ * QPI enabled implies Quad enable.
+ *
+ * Enable only Quad mode when writes to flash can be in x1 mode and only reads need to be in x4 mode (eg: Passive x4 mode with one x4 flash memory)
+ * Enable QPI mode when writes and reads should be in x4 mode (eg: Passive x8 mode with two x4 flash memories)
+ *
+ * \param flashIndex SPI Flash Index
+ * \param quadEnable Quad Mode enable
+ * \param qpiEnable QPI mode enable
+ * \retval status
+ */
 cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool quadEnable, bool qpiEnable);
 
 #if defined(__cplusplus)

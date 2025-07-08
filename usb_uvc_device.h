@@ -7,7 +7,7 @@
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -35,14 +35,16 @@
 extern "C" {
 #endif
 
-/* This header file comprises of the UVC application constants and
- * the video frame configurations */
+/*
+ * This header file comprises of the UVC application constants and
+ * the video frame configurations 
+ */
 
 #define H_RES_640                                  (640)
 #define V_RES_480                                  (480)
 #define BIT_PIXEL                                  (16)
 
-#define H_RES_1920                                   (1920)
+#define H_RES_1920                                 (1920)
 #define V_RES_1080                                 (1080)
 
 #define CY_USB_UVC_DEVICE_SET_FEATURE              (0x0C)
@@ -126,9 +128,7 @@ extern "C" {
 #define CY_USB_UVC_HS_1080P_FRAME_INDEX            (1)
 #define CY_USB_UVC_HS_VGA_FRAME_INDEX              (2)
 
-#define CY_USB_UVC_PROBE_CONTROL_UPDATE_SIZE       (6) /* Format Index, Frame Index and Frame interval */
-
-void Cy_UVC_DeviceTaskHandler(void *pTaskParam);
+#define CY_USB_UVC_PROBE_CONTROL_UPDATE_SIZE       (6)             /* Format Index, Frame Index and Frame interval */
 
 #if defined(__cplusplus)
 }

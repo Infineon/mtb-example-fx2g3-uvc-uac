@@ -2,11 +2,11 @@
 * \file qspi.c
 * \version 1.0
 *
-*  Implements the OSPI data transfers part for FPGA configuration.
+* \brief Implements the OSPI data transfers part for FPGA configuration.
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -58,14 +58,12 @@ static const cy_stc_smif_config_t qspiConfig =
 };
 
 #if !FLASH_AT45D
-
-/*
-Function     : Cy_SPI_FlashReset ()
-Description  : Send reset command to selected flash.   
-Parameters  :  cy_en_flash_index_t flashIndex 
-Return      :  cy_en_smif_status_t  
-
-*/
+/**
+ * \name Cy_SPI_FlashReset
+ * \brief Function to send reset command to selected flash
+ * \param flashIndex SPI Flash Index
+ * \retval status
+ */
 static cy_en_smif_status_t Cy_SPI_FlashReset(cy_en_flash_index_t flashIndex)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
@@ -98,14 +96,13 @@ static cy_en_smif_status_t Cy_SPI_FlashReset(cy_en_flash_index_t flashIndex)
     return status;
 }
 
-
-/*
-Function     : Cy_SPI_WriteEnable ()
-Description :  Set write enable latch of the selected flash. This is needed before doing program and erase operations.
-Parameters  :  cy_en_flash_index_t flashIndex 
-Return      :  cy_en_smif_status_t  
-
-*/
+/**
+ * \name Cy_QSPI_WriteEnable
+ * \brief   Function to Set write enable latch of the selected flash. 
+ *          This is needed before doing program and erase operations.
+ * \param flashIndex SPI Flash Index
+ * \retval status
+ */
 static cy_en_smif_status_t Cy_QSPI_WriteEnable(cy_en_flash_index_t flashIndex)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
@@ -161,13 +158,12 @@ static cy_en_smif_status_t Cy_QSPI_WriteEnable(cy_en_flash_index_t flashIndex)
     return status;
 }
 
-/*
-Function     : Cy_SPI_IsMemBusy ()
-Description :  Check if Write In Progress (WIP) bit of the flash is cleared.
-Parameters  :  cy_en_flash_index_t flashIndex 
-Return      :  bool  
-
-*/
+/**
+ * \name Cy_QSPI_IsMemBusy
+ * \brief Function to check if Write In Progress (WIP) bit of the flash is cleared
+ * \param flashIndex SPI Flash Index
+ * \retval status
+ */
 bool Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
@@ -201,14 +197,13 @@ bool Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex)
     return ((statusVal & 0x01) == 0x01);
 }
 
-/*
-Function     : Cy_SPI_ReadConfigRegister ()
-Description :   Read selected flash's config register
-Parameters  :  cy_en_flash_index_t flashIndex, uint8_t *readValue 
-Return      :  cy_en_smif_status_t  
-
-*/
-
+/**
+ * \name Cy_SPI_WriteConfigRegister
+ * \brief Function to Read selected flash's config register
+ * \param flashIndex SPI Flash Index
+ * \param writeValue Value to write to register address
+ * \retval status
+ */
 static cy_en_smif_status_t Cy_SPI_WriteConfigRegister(cy_en_flash_index_t flashIndex, uint8_t writeValue)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
@@ -248,14 +243,13 @@ static cy_en_smif_status_t Cy_SPI_WriteConfigRegister(cy_en_flash_index_t flashI
     return status;
 }
 
-/*
-Function     : Cy_SPI_ReadConfigRegister ()
-Description :   Read selected flash's config register
-Parameters  :  cy_en_flash_index_t flashIndex, uint8_t *readValue 
-Return      :  cy_en_smif_status_t  
-
-*/
-
+/**
+ * \name Cy_SPI_ReadConfigRegister
+ * \brief Function to read selected flash's config register
+ * \param flashIndex SPI Flash Index
+ * \param readValue Pointer to read data
+ * \retval status
+ */
 static cy_en_smif_status_t Cy_SPI_ReadConfigRegister(cy_en_flash_index_t flashIndex, uint8_t *readValue)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
@@ -286,14 +280,15 @@ static cy_en_smif_status_t Cy_SPI_ReadConfigRegister(cy_en_flash_index_t flashIn
     return status;
 }
 
-/*
-Function     : Cy_QSPI_Read ()
-Description :  Perform Read operation from the flash in Register mode.
-Parameters  :  uint32_t address, uint8_t *rxBuffer, uint32_t length, cy_en_flash_index_t flashIndex 
-Return      :  cy_en_smif_status_t  
-
-*/
-
+/**
+ * \name Cy_QSPI_Read
+ * \brief Function to perform Read operation from the flash in Register mode.
+ * \param address SPI Flash register address
+ * \param rxBuffer Pointer to recive data buffer
+ * \param flashIndex SPI Flash Index
+ * \param length length of data
+ * \retval status
+ */
 cy_en_smif_status_t Cy_QSPI_Read(uint32_t address, uint8_t *rxBuffer, uint32_t length, cy_en_flash_index_t flashIndex)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
@@ -345,7 +340,14 @@ cy_en_smif_status_t Cy_QSPI_Read(uint32_t address, uint8_t *rxBuffer, uint32_t l
 
 #endif /* !FLASH_AT45D */
 
-/* Address to array converter*/
+/**
+ * \name Cy_SPI_AddressToArray
+ * \brief Function to convert 32-nit value to byte array
+ * \param value 32-bit value to be converted
+ * \param byteArray Pointer to byte array
+ * \param numAddressBytes Number of bytes
+ * \retval status
+ */
 void Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray,uint8_t numAddressBytes)
 {
     do
@@ -356,7 +358,23 @@ void Cy_SPI_AddressToArray(uint32_t value, uint8_t *byteArray,uint8_t numAddress
     } while (numAddressBytes > 0U);
 }
 
-/* Initialize the SPI Flash*/
+/**
+ * \name Cy_SPI_FlashInit
+ * \brief Function to initialize SPI Flash
+ * \details
+ * Quad Mode - Data in x4 mode, Command in x1 mode
+ * QPI Mode - Data in x4 mode, Command in x4 mode
+ *
+ * QPI enabled implies Quad enable.
+ *
+ * Enable only Quad mode when writes to flash can be in x1 mode and only reads need to be in x4 mode (eg: Passive x4 mode with one x4 flash memory)
+ * Enable QPI mode when writes and reads should be in x4 mode (eg: Passive x8 mode with two x4 flash memories)
+ *
+ * \param flashIndex SPI Flash Index
+ * \param quadEnable Quad Mode enable
+ * \param qpiEnable QPI mode enable
+ * \retval status
+ */
 cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool quadEnable, bool qpiEnable)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
@@ -385,7 +403,13 @@ cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool quadE
     return status;
 }
 
-/* Start the QSPI/SMIF block*/
+/**
+ * \name Cy_QSPI_Start
+ * \brief Function to start the QSPI/SMIF block
+ * \param pAppCtxt application layer context pointer
+ * \param hbw_bufmgr HBDMA buffer manager pointer
+ * \retval status
+ */
 void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pAppCtxt,cy_stc_hbdma_buf_mgr_t *hbw_bufmgr)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
@@ -407,11 +431,15 @@ void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pAppCtxt,cy_stc_hbdma_buf_mgr_t *hbw_b
 
     Cy_SMIF_Enable(SMIF_HW, &qspiContext);
 
-
     DBG_APP_INFO("Cy_USB_QSPIEnabled \n\r:");
 }
 
-/* Configure SMIF pins*/
+/**
+ * \name Cy_QSPI_ConfigureSMIFPins
+ * \brief Function to configure SMIF pins
+ * \param init initialize SMIF pins if true
+ * \retval void
+ */
 void Cy_QSPI_ConfigureSMIFPins(bool init)
 {
     cy_en_gpio_status_t status = CY_GPIO_SUCCESS;
@@ -605,7 +633,13 @@ void Cy_QSPI_ConfigureSMIFPins(bool init)
 
 }
 
-/* Initialize FPGA Configuration pins*/
+/**
+ * \name Cy_FPGAConfigPins
+ * \brief Function to initialize FPGA configuration pins
+ * \param pAppCtxt application layer context pointer
+ * \param mode fpga configuration mode
+ * \retval void
+ */
 void Cy_FPGAConfigPins(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mode)
 {
     cy_en_gpio_status_t status = CY_GPIO_SUCCESS;
@@ -659,7 +693,13 @@ void Cy_FPGAConfigPins(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t m
 #endif
 }
 
-/* Configure FPGA*/
+/**
+ * \name Cy_FPGAConfigure
+ * \brief Function to initialize initiate FPGA configuration
+ * \param pAppCtxt application layer context pointer
+ * \param mode fpga configuration mode
+ * \retval void
+ */
 bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mode)
 {
     uint32_t cdoneVal = 0;
@@ -715,7 +755,7 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
 #if CONFIG_CDONE_AS_INPUT
         uint32_t bitFileSize = EFINIX_MAX_CONFIG_FILE_SIZE;
 #else
-        uint32_t bitFileSize = EFINIX_FPGA_SOC_MERGED_FILE_SIZE; /*#TODO: Replace with size read from Flash*/
+        uint32_t bitFileSize = EFINIX_FPGA_SOC_MERGED_FILE_SIZE;
 #endif
         
         Cy_Debug_AddToLog(3, CYAN);

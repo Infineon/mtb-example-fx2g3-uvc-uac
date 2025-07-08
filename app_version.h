@@ -1,14 +1,14 @@
 /***************************************************************************//**
 * \file app_version.h
-* \version 1.0.1
+* \version 1.0.2
 *
-* @brief @{Version definition for the firmware application. This version
-* information follows a Cypress defined format that identifies the type
-* of application along with the version information.@}
+* \details      Version definition for the firmware application. This version
+*               information follows a Cypress defined format that identifies the type
+*               of application along with the version information.
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -27,13 +27,12 @@
 *******************************************************************************/
 #ifndef _APP_VERSION_H_
 #define _APP_VERSION_H_
-/******************************************************************************
- * Constant definitions.
- *****************************************************************************/
+
+/* Macros */
 #define APP_VERSION_MAJOR      (1u)
 #define APP_VERSION_MINOR      (0u)
-#define APP_VERSION_PATCH      (1u)
-#define APP_VERSION_BUILD      (30u)
+#define APP_VERSION_PATCH      (2u)
+#define APP_VERSION_BUILD      (40u)
 
 #define APP_VERSION_NUM        ((APP_VERSION_MAJOR << 28u) | (APP_VERSION_MINOR << 24u) | \
         (APP_VERSION_PATCH << 16u) | (APP_VERSION_BUILD))

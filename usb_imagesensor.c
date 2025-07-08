@@ -2,11 +2,11 @@
 * \file cy_imagesensor.c
 * \version 1.0
 *
-* Implements Image Sensor
+* Implements Image Sensor initializetion & configuration functions
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -24,10 +24,6 @@
 * limitations under the License.
 *******************************************************************************/
 
-/******************/
-/* Include Files  */
-/******************/
-
 #if MIPI_SOURCE_ENABLE
 
 #include "usb_imagesensor.h"
@@ -36,17 +32,12 @@
 #include "cy_lvds.h"
 #include "usb_uvc_device.h"
 
-/******************/
-/* Global Defines */
-/******************/
-
 #define SENSOR_I2C_ADDRESS_WIDTH            (2)
 #define SENSOR_I2C_DATA_WIDTH               (1)
 
 /* Sensor configuraton status */
 bool glIsSensorConfigured = false;
-
-#define SENSOR_SLAVE_ADDR               (0x10)
+#define SENSOR_SLAVE_ADDR                   (0x10)
 
 const cy_stc_sensorConfig_t arraySensorInit_rpcamv2[] ={
     {0x0100, 0x0000},
@@ -404,22 +395,13 @@ const cy_stc_sensorConfig_t arrayVga_pcam5c[] =
     {0x3008, 0x02},
 };
 
-/******************/
-/* User Functions */
-/******************/
-/******************************************************************************
-*   Function:       void Cy_UVC_SendI2cTable(cy_stc_sensorConfig_t
-*                       *sensorConfig, uint32_t count)
-*
-*   Input(s):       *sensorConfig, count
-*
-*   Output(s):      Returns 0 for no error
-*
-*   Description:    Function to send ISP config table to image sensor
-*
-*   Calls:          Cy_I2C_Write()
-*
-******************************************************************************/
+/**
+ * \name Cy_UVC_SendI2cTable
+ * \brief I2C writes to image sensor
+ * \param sensorConfig pointer to sesnofr configuration table
+ * \param count number of I2C writes in the configuration table
+ * \retval None
+ */
 void Cy_UVC_SendI2cTable(const cy_stc_sensorConfig_t *sensorConfig, uint32_t count)
 {
     cy_en_scb_i2c_status_t status = CY_SCB_I2C_SUCCESS;
@@ -444,20 +426,11 @@ void Cy_UVC_SendI2cTable(const cy_stc_sensorConfig_t *sensorConfig, uint32_t cou
 
 }/*End of Cy_UVC_SendI2cTable()*/
 
-
-/******************************************************************************
-*   Function:       void Cy_UVC_ImageSensorInit(void)
-*
-*   Input(s):       None
-*
-*   Output(s):      none
-*
-*   Description:    Function to initialize image sensor
-*                   generally image sensor will have i2c comunication to config
-*
-*   Calls:          Cy_UVC_SendI2cTable()
-*
-******************************************************************************/
+/**
+ * \name Cy_UVC_ImageSensorInit
+ * \brief Initialize image sensor 
+ * \retval None
+ */
 void Cy_UVC_ImageSensorInit(void)
 {
     uint32_t count = 0;
@@ -466,20 +439,13 @@ void Cy_UVC_ImageSensorInit(void)
     Cy_UVC_SendI2cTable(arraySensorInit_rpcamv2,count);
 }/*End of Cy_UVC_ImageSensorInit()*/
 
-/******************************************************************************
-*   Function:       void Cy_UVC_ImageSensorSetResolution(uint32_t
-*                   width,uint32_t height)
-*
-*   Input(s):       None
-*
-*   Output(s):      none
-*
-*   Description:    Function to initialize image sensor
-*                   generally image sensor will have i2c comunication to config
-*
-*   Calls:          Cy_UVC_SendI2cTable()
-*
-******************************************************************************/
+/**
+ * \name Cy_UVC_ImageSensorSetResolution
+ * \brief This function Sets video resolution 
+ * \param width Video width (in pixels)
+ * \param height Video height (in pixels)
+ * \retval None
+ */
 void Cy_UVC_ImageSensorSetResolution(uint32_t width,uint32_t height)
 {
     uint32_t count = 0;
@@ -505,19 +471,11 @@ void Cy_UVC_ImageSensorSetResolution(uint32_t width,uint32_t height)
     }
 }
 
-/******************************************************************************
-*   Function:       void Cy_UVC_ConfigureImageSensor(void)
-*
-*   Input(s):       None
-*
-*   Output(s):      nones
-*
-*   Description:    Function to reset the image sensor via GPIO and writes
-*                   sensor register write to configure the image sensor
-*
-*   Calls:          Cy_UVC_ImageSensorSetResolution() Cy_UVC_ImageSensorInit()
-*
-******************************************************************************/
+/**
+ * \name Cy_UVC_ConfigureImageSensor
+ * \brief This function configures image sensor
+ * \retval None
+ */
 void Cy_UVC_ConfigureImageSensor(void)
 {
     glIsSensorConfigured = true;

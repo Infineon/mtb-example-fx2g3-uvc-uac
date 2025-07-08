@@ -1,12 +1,12 @@
 /***************************************************************************//**
-* \file fx3g2_descriptors.c
+* \file usb_descriptors.c
 * \version 1.0
 *
-* Defines the USB descriptors used in the FX2G3 USB Device Class implementation.
+* \brief Defines the USB descriptors used in the FX2G3 USB Device Class implementation.
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -38,7 +38,7 @@ USB_DESC_ATTRIBUTES uint8_t CyFxUSB20DeviceDscr[18];
 const uint8_t Usb2DeviceDscr[] = {
     0x12,                           /* Descriptor size */
     0x01,                           /* Device descriptor type */
-    0x00,0x02,                      /* USB 2.00 (TODO: Avoiding LPM-L1 for now). */
+    0x00,0x02,                      /* USB 2.00 */
     0xEF,                           /* Device class: Miscellaneous. */
     0x02,                           /* Device Sub-class: Interface Association Descriptor. */
     0x01,                           /* Device protocol: Interface Association Descriptor. */
@@ -552,6 +552,13 @@ void CopyDescriptorsToHBRam (void)
     memcpy (CyFxUSBFSDscr, FullSpeedStringDescr, sizeof(FullSpeedStringDescr));
 }
 
+/**
+ * \name Cy_USB_RegisterUsbDescriptors
+ * \brief Function to register USB descriptors to USBD 
+ * \param pAppCtxt application layer context pointer.
+ * \param usbSpeed USB device Speed
+ * \return None
+ */
 void Cy_USB_RegisterUsbDescriptors(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_usb_speed_t usbSpeed)
 {
     /* Can be moved so that copy is only done once. */
