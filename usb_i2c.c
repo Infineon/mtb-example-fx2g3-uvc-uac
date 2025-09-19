@@ -256,35 +256,35 @@ void Cy_I2C_MasterISR(void)
  */
 void ConfigureSCB0Clock(uint8_t scbIndex)
 {
-	/* Get the PERI clock frequency for the platform. */
-	uint32_t hfClkFreq = Cy_SysClk_ClkPeriGetFrequency();
+    /* Get the PERI clock frequency for the platform. */
+    uint32_t hfClkFreq = Cy_SysClk_ClkPeriGetFrequency();
 
-	/* Configure PERI 16 bit clock divider#3 for 3 MHz operation and enable it. */
-	switch (hfClkFreq)
-	{
-		case 50000000UL:
-			/* Divide 50 MHz by 16 to get 3 MHz. */
-			Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 3, 15);
-			break;
+    /* Configure PERI 16 bit clock divider#3 for 3 MHz operation and enable it. */
+    switch (hfClkFreq)
+    {
+        case 50000000UL:
+            /* Divide 50 MHz by 16 to get 3 MHz. */
+            Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 3, 15);
+            break;
 
-		case 60000000UL:
-			/* Divide 60 MHz by 20 to get 3 MHz. */
-			Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 3, 19);
-			break;
+        case 60000000UL:
+            /* Divide 60 MHz by 20 to get 3 MHz. */
+            Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 3, 19);
+            break;
 
-		case 75000000UL:
-			/* Divide 75 MHz by 25 to get 3 MHz. */
-			Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 3, 24);
-			break;
+        case 75000000UL:
+            /* Divide 75 MHz by 25 to get 3 MHz. */
+            Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 3, 24);
+            break;
 
-		case 100000000UL:
-			/* Divide 100 MHz by 33 to get 3 MHz. */
-			Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 3, 32);
-			break;
+        case 100000000UL:
+            /* Divide 100 MHz by 33 to get 3 MHz. */
+            Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 3, 32);
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 
     DBG_APP_INFO("scbIndex %d hfClkFreq%d \n\r",0,hfClkFreq);
 

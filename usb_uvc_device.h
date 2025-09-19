@@ -71,7 +71,7 @@ extern "C" {
 #define CY_USB_EP_BULK_VIDEO_PKT_SIZE              (0x400)     /* UVC video streaming endpoint packet Size */
 #define CY_USB_EP_BULK_VIDEO_PKTS_COUNT            (0x01)      /* UVC video streaming endpoint packet Count */
 #define CY_USB_UVC_MAX_VID_FRAMES                  (2)         /* Maximum number of video frames (4) */
-#define CY_USB_UVC_STREAM_BUF_SIZE                 (61440)     /* UVC Buffer size  */
+#define CY_USB_UVC_STREAM_BUF_SIZE                 (61472)     /* UVC Buffer size  */
 #define CY_USB_UVC_STREAM_BUF_COUNT                (4)         /* UVC Buffer count */
 #define CY_USB_UVC_MAX_HEADER                      (32)        /* Maximum number of header bytes in UVC */
 #define CY_USB_UVC_HEADER_DEFAULT_BFH              (0x8C)      /* Default BFH(Bit Field Header) for the UVC Header */
@@ -109,8 +109,10 @@ extern "C" {
 /* Get the MS byte from a 16-bit number */
 #define CY_GET_MSB(w)                              ((uint8_t)((w) >> 8))
 
-#define CY_USB_FULL_BUFFER_NO_640_480              ((H_RES_640*V_RES_480*(BIT_PIXEL/8))/(CY_USB_UVC_STREAM_BUF_SIZE-32))     
+#define CY_USB_FULL_BUFFER_NO_640_480              ((H_RES_640*V_RES_480*(BIT_PIXEL/8))/(CY_USB_UVC_STREAM_BUF_SIZE-32))   
+#define CY_USB_PARTIAL_BUFFER_640_480              ((H_RES_640*V_RES_480*(BIT_PIXEL/8))%(CY_USB_UVC_STREAM_BUF_SIZE-32))  
 #define CY_USB_FULL_BUFFER_NO_1920_1080            ((H_RES_1920*V_RES_1080*(BIT_PIXEL/8) )/((CY_USB_UVC_STREAM_BUF_SIZE)-32))
+#define CY_USB_PARTIAL_BUFFER_1920_1080            ((H_RES_1920*V_RES_1080*(BIT_PIXEL/8) )%((CY_USB_UVC_STREAM_BUF_SIZE)-32))
 
 
 #define USB_DESC_ATTRIBUTES __attribute__ ((section(".descSection"), used)) __attribute__ ((aligned (32)))

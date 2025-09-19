@@ -840,7 +840,7 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
 #endif /*FLASH_AT45D */
 
-        Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);	
+        Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);   
 
         Cy_SysLib_Delay(6); /*Minimum time between deassertion of CRESET_N to first valid configuration data.*/
 

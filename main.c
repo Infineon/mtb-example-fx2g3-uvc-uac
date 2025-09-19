@@ -103,7 +103,13 @@ void vPortSetupTimerInterrupt(void)
 
     /* Start the SysTick timer with a period of 1 ms. */
     Cy_SysTick_SetClockSource(CY_SYSTICK_CLOCK_SOURCE_CLK_CPU);
+
+#if CY_CPU_CORTEX_M4
     Cy_SysTick_SetReload(Cy_SysClk_ClkFastGetFrequency() / 1000U);
+#else
+    Cy_SysTick_SetReload(Cy_SysClk_ClkSlowGetFrequency() / 1000U);
+#endif /* CY_CPU_CORTEX_M4 */
+
     Cy_SysTick_Clear();
     Cy_SysTick_Enable();
 }
@@ -428,6 +434,7 @@ void Cy_UVC_DataWire1Combined_ISR (void)
                 case UVC_STREAM_ENDPOINT:
             	    CY_UVC_DataWire_ISR();
                     break;
+#if AUDIO_IF_EN
                 case UAC_IN_ENDPOINT:
                     Cy_PDM_InEpDma_ISR();
                     break;
@@ -437,6 +444,7 @@ void Cy_UVC_DataWire1Combined_ISR (void)
                 case PDM_RX_CH1:
                     PDM_CH1_RX_ISR();
                     break;
+#endif /* AUDIO_IF_EN */
             }
         }
     }
@@ -751,7 +759,7 @@ int main(void)
     /* Create task for printing logs and check status. */
     xTaskCreate(PrintTaskHandler, "PrintLogTask", 512, NULL, 5, &printLogTaskHandle);
 
-    Cy_SysLib_Delay(500);
+    Cy_SysLib_Delay(250);
     Cy_Debug_AddToLog(1, "********** FX2G3: USB Video Class (UVC) Application ********** \r\n");
 
     /* Print application, USBD stack and HBDMA version information. */

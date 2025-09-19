@@ -619,11 +619,16 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
             {
                 endpDirection = CY_USB_ENDP_DIR_OUT;
             }
+            
             endpNumber = (uint32_t)((*(pEndpDscr + CY_USB_ENDP_DSCR_OFFSET_ADDRESS)) & 0x7F);
-
-            /* Flush, reset and then disable the endpoint. */
-            Cy_USBD_FlushEndp(pUsbdCtxt, endpNumber, endpDirection);
+            
+            if((MXS40USBHSDEV_USBHSDEV->EEPM_DEBUG_ENDPOINT[endpNumber] & USBHSDEV_EEPM_DEBUG_ENDPOINT_EGRS_P_REQUESTS_Msk) != 0)
+            {
+	            /* Flush, reset and then disable the endpoint. */
+	            Cy_USBD_FlushEndp(pUsbdCtxt, endpNumber, endpDirection);
+            } 
             Cy_USBD_ResetEndp(pUsbdCtxt, endpNumber, endpDirection, false);
+            
             Cy_USBD_EnableEndp(pUsbdCtxt, endpNumber, endpDirection, false);
             numOfEndp--;
 
@@ -645,51 +650,55 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
         }
 #endif /* STEREO_ENABLE */
 
-        DBG_APP_INFO("PDM DMAStop done\r\n");
+        DBG_APP_INFO("PDM DMA Stop done\r\n");
     }
 
     pAppCtxt->prevAltSetting = altSetting;
-
-    /* Now take care of different config with new alt setting. */
-    pIntfDscr = Cy_USBD_GetIntfDscr(pUsbdCtxt, UAC_STREAM_INTF_NUM, altSetting);
-    if (pIntfDscr == NULL)
+    
+    
+    if(pAppCtxt->prevAltSetting != 0)
     {
-        DBG_APP_INFO("pIntfDscrNull\r\n");
-        return;
-    }
-
-    numOfEndp = Cy_USBD_FindNumOfEndp(pIntfDscr);
-    if (numOfEndp == 0x00)
-    {
-        DBG_APP_INFO("SetIntf:numEp 0\r\n");
-    }
-    else
-    {
-        pEndpDscr = Cy_USBD_GetEndpDscr(pUsbdCtxt, pIntfDscr);
-        while (numOfEndp != 0x00)
-        {
-            Cy_USB_AppConfigureEndp(pUsbdCtxt, pEndpDscr);
-            Cy_USB_AppSetupEndpDmaParamsHs(pAppCtxt, pEndpDscr);
-            numOfEndp--;
-
-            /* Move to the next endpoint. */
-            pEndpDscr = (pEndpDscr + (*(pEndpDscr + CY_USB_DSCR_OFFSET_LEN)));
-            
-        }
-
-#if CY_CPU_CORTEX_M4
-        /* Register interrupt for the DW channel associated with the UAC IN endpoint. */
-        Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_PDM_InEpDma_ISR);
-#else
-        /* Register interrupt for the DW channel associated with the UAC IN endpoint. */
-        Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_UVC_DataWire1Combined_ISR);
-#endif /* CY_CPU_CORTEX_M4 */
-
-        /* Queue the first read from the PDM receive FIFOs. */
-        Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
-
-        /* Start a timer which will activate the PDM receive channels after some time. */
-        xTimerReset(pAppCtxt->pdmActivateTimer, 0);
+	    /* Now take care of different config with new alt setting. */
+	    pIntfDscr = Cy_USBD_GetIntfDscr(pUsbdCtxt, UAC_STREAM_INTF_NUM, altSetting);
+	    if (pIntfDscr == NULL)
+	    {
+	        DBG_APP_INFO("pIntfDscrNull\r\n");
+	        return;
+	    }
+	
+	    numOfEndp = Cy_USBD_FindNumOfEndp(pIntfDscr);
+	    if (numOfEndp == 0x00)
+	    {
+	        DBG_APP_INFO("SetIntf:numEp 0\r\n");
+	    }
+	    else
+	    {
+	        pEndpDscr = Cy_USBD_GetEndpDscr(pUsbdCtxt, pIntfDscr);
+	        while (numOfEndp != 0x00)
+	        {
+	            Cy_USB_AppConfigureEndp(pUsbdCtxt, pEndpDscr);
+	            Cy_USB_AppSetupEndpDmaParamsHs(pAppCtxt, pEndpDscr);
+	            numOfEndp--;
+	
+	            /* Move to the next endpoint. */
+	            pEndpDscr = (pEndpDscr + (*(pEndpDscr + CY_USB_DSCR_OFFSET_LEN)));
+	            
+	        }
+	
+	#if CY_CPU_CORTEX_M4
+	        /* Register interrupt for the DW channel associated with the UAC IN endpoint. */
+	        Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_PDM_InEpDma_ISR);
+	#else
+	        /* Register interrupt for the DW channel associated with the UAC IN endpoint. */
+	        Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_UVC_DataWire1Combined_ISR);
+	#endif /* CY_CPU_CORTEX_M4 */
+	
+	        /* Queue the first read from the PDM receive FIFOs. */
+	        Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
+	      
+	        /* Start a timer which will activate the PDM receive channels after some time. */
+	        xTimerReset(pAppCtxt->pdmActivateTimer, 0);
+	    }
     }
 
     DBG_APP_INFO("UAC SetIntf done\r\n");

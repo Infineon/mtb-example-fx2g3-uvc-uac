@@ -7,7 +7,7 @@
 #
 ################################################################################
 # \copyright
-# Copyright (2024), Cypress Semiconductor Corporation (an Infineon company)
+# Copyright (2025), Cypress Semiconductor Corporation (an Infineon company)
 # SPDX-License-Identifier: Apache-2.0
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,17 +77,35 @@ CONFIG=Release
 # If set to "true" or "1", display full command-lines when building.
 VERBOSE=
 
+# Include the Board Support Package (BSP) Makefile to obtain the DEVICE variable definition
+-include bsps/TARGET_$(TARGET)/bsp.mk
+
+# Specify the default product.
+# NOTE: This default setting is intended for internal use only and does not impact user builds, even if the product target is modified.
+DEVICE ?= CYUSB2318-BF104AXI
+
+# Ensure that the specified product (DEVICE) is supported by this code example
+ifeq ($(filter $(subst -,_,$(DEVICE)),CYUSB2318_BF104AXI CYUSB2317_BF104AXI),)
+$(error Unsupported product: $(DEVICE))
+endif
+
 # Name of CORE to use. Options include:
 #
 # CM4  -- Cortex M4
 # CM0P -- Cortex M0+
-CORE ?= CM4
-
-# Generate Bootloader enabled hex. Options include:
 #
-# yes -- Hex with bootloader region
-# no  -- Hex without bootloader region
-BLENABLE ?= yes
+# Set CORE to CM0P if DEVICE is not CYUSB2318_BF104AXI
+# Set BLENABLE to yes if DEVICE is CYUSB2318_BF104AXI
+#
+# CYUSB2318_BF104AXI supports both CM4 and CM0+ cores
+# Other products support only CM0+ core
+ifeq ($(subst -,_,$(DEVICE)),CYUSB2318_BF104AXI)
+    CORE ?= CM4
+    BLENABLE ?= yes
+else
+    CORE=CM0P
+    BLENABLE=yes
+endif
 
 
 ################################################################################
@@ -123,7 +141,6 @@ INCLUDES=
 DEFINES= \
         FX2G3_EN=1 \
 		LVCMOS_16BIT_SDR=1 \
-        CYUSB2318_BF104AXI=1 \
         BCLK__BUS_CLK__HZ=75000000 \
         DEBUG_INFRA_EN=1 \
         FREERTOS_ENABLE=1 \
@@ -135,6 +152,10 @@ DEFINES= \
         MIPI_SOURCE_ENABLE=1 \
         AUDIO_IF_EN=1 \
         STEREO_ENABLE=0
+
+# Append product definition
+DEFINES += $(subst -,_,$(DEVICE))=1
+
 
 # Conditionally append BLOAD_ENABLE=1 if BLENABLE is set to yes
 ifeq ($(BLENABLE), yes)
@@ -209,22 +230,22 @@ endif
 # Additional / custom libraries to link in to the application.
 LDLIBS=
 
-# Path to the linker script to use (if empty, use the default linker script).
+# Linker script selection
 ifeq ($(CORE),CM4)
     ifeq ($(BLENABLE), yes)
         # Use loadable linker script for CM4 core
-        LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),fx_cm4_loadable.ld,fx_cm4_loadable.sct)
+        LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),linker_scripts/$(subst -,_,$(DEVICE))/fx_cm4_loadable.ld,linker_scripts/$(subst -,_,$(DEVICE))/fx_cm4_loadable.sct)
     else
         # Use dual linker script for CM4 core
-        LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),fx_cm4.ld,fx_cm4_dual.sct)
+        LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),linker_scripts/$(subst -,_,$(DEVICE))/fx_cm4.ld,linker_scripts/$(subst -,_,$(DEVICE))/fx_cm4_dual.sct)
     endif
 else ifeq ($(CORE),CM0P)
 	ifeq ($(BLENABLE), yes)
 		# Use loadable linker script for CM0P core
-		LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),fx_cm0plus_loadable.ld,fx_cm0plus_loadable.sct)
+		LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),linker_scripts/$(subst -,_,$(DEVICE))/fx_cm0plus_loadable.ld,linker_scripts/$(subst -,_,$(DEVICE))/fx_cm0plus_loadable.sct)
 	else
 		# Use linker script for CM0P core
-    	LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),fx_cm0plus.ld,fx_cm0plus.sct)
+    	LINKER_SCRIPT = $(if $(filter GCC_ARM,$(TOOLCHAIN)),linker_scripts/$(subst -,_,$(DEVICE))/fx_cm0plus.ld,linker_scripts/$(subst -,_,$(DEVICE))/fx_cm0plus.sct)
     endif
 endif
 

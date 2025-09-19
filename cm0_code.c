@@ -45,12 +45,21 @@ __attribute__ ((section(".cy_app_signature"), used)) const uint8_t cyFx2g3AppSig
 void Cy_AppVerify_MemorySymbols (void)
 {
     __asm (
-        ".global __cy_app_verify_start\n"
-        ".global __cy_app_verify_length\n"
-        ".global __cy_app_signature_addr\n"
-        ".equ __cy_app_verify_start, 0x10008000\n"
-        ".equ __cy_app_verify_length, 0x00077E00\n"
-        ".equ __cy_app_signature_addr, 0x1007FE00\n"
+#if CY_FLASH_SIZE == 0x80000
+    ".global __cy_app_verify_start\n"
+    ".global __cy_app_verify_length\n"
+    ".global __cy_app_signature_addr\n"
+    ".equ __cy_app_verify_start, 0x10008000\n"
+    ".equ __cy_app_verify_length, 0x00077E00\n"
+    ".equ __cy_app_signature_addr, 0x1007FE00\n"
+#elif CY_FLASH_SIZE == 0x40000
+    ".global __cy_app_verify_start\n"
+    ".global __cy_app_verify_length\n"
+    ".global __cy_app_signature_addr\n"
+    ".equ __cy_app_verify_start, 0x10008000\n"
+    ".equ __cy_app_verify_length, 0x00037E00\n"
+    ".equ __cy_app_signature_addr, 0x1003FE00\n"
+#endif /* CY_FLASH_SIZE */
     );
 }
 #endif /* defined (__ARMCC_VERSION) */
