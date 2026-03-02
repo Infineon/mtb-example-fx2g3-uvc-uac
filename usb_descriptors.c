@@ -6,7 +6,7 @@
 *
 *******************************************************************************
 * \copyright
-* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2026), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -39,9 +39,9 @@ const uint8_t Usb2DeviceDscr[] = {
     0x12,                           /* Descriptor size */
     0x01,                           /* Device descriptor type */
     0x00,0x02,                      /* USB 2.00 */
-    0xEF,                           /* Device class: Miscellaneous. */
-    0x02,                           /* Device Sub-class: Interface Association Descriptor. */
-    0x01,                           /* Device protocol: Interface Association Descriptor. */
+    0xEF,                           /* Device class: Miscellaneous */
+    0x02,                           /* Device Sub-class: Interface Association Descriptor */
+    0x01,                           /* Device protocol: Interface Association Descriptor */
     0x40,                           /* Maxpacket size for EP0 : 64 bytes */
     0xB4,0x04,                      /* Vendor ID */
     0x03,0x49,                      /* Product ID */
@@ -66,7 +66,7 @@ const uint8_t BosDescriptor[] = {
     0x10,                           /* Device capability type descriptor */
     0x02,                           /* USB 2.0 extension capability type */
     0x1E,0x64,0x00,0x00,            /* Supported device level features: LPM support, BESL supported,
-                                       Baseline BESL=400 us, Deep BESL=1000 us. */
+                                       Baseline BESL=400 us, Deep BESL=1000 us */
 
 };
 
@@ -77,9 +77,9 @@ const uint8_t DeviceQualDescriptor[] = {
     0x0A,                           /* descriptor size */
     0x06,                           /* Device qualifier descriptor type */
     0x00,0x02,                      /* USB 2.0 */
-    0xEF,                           /* Device class: Miscellaneous. */
-    0x02,                           /* Device Sub-class: Interface Association Descriptor. */
-    0x01,                           /* Device protocol: Interface Association Descriptor. */
+    0xEF,                           /* Device class: Miscellaneous */
+    0x02,                           /* Device Sub-class: Interface Association Descriptor */
+    0x01,                           /* Device protocol: Interface Association Descriptor */
     0x40,                           /* Maxpacket size for EP0 : 64 bytes */
     0x01,                           /* Number of configurations */
     0x00                            /* Reserved */
@@ -93,10 +93,10 @@ const uint8_t HighSpeedConfigDescr[] = {
     0x09,                           /* Descriptor size */
     0x02,                           /* Configuration descriptor type */
 #if AUDIO_IF_EN
-    0x4F,0x01,                      /* Length of this descriptor and all sub descriptors: 0x14F bytes. */
+    0x4F,0x01,                      /* Length of this descriptor and all sub descriptors: 0x14F bytes */
     0x04,                           /* Number of interfaces: 2 */
 #else
-    0xEC,0x00,                      /* Length of this descriptor and all sub descriptors: 0xEC bytes. */
+    0xEC,0x00,                      /* Length of this descriptor and all sub descriptors: 0xEC bytes */
     0x02,                           /* Number of interfaces: 2 */
 #endif /* AUDIO_IF_EN */
     0x01,                           /* Configuration number */
@@ -159,7 +159,7 @@ const uint8_t HighSpeedConfigDescr[] = {
     0x03,                           /* Size of controls field for this terminal : 3 bytes */
     0x00,0x00,0x00,                 /* No controls supported */
     0x00,                           /* String desc index : Not used */
-    0x00,                           /* No analog mode support. */
+    0x00,                           /* No analog mode support */
 
     /* Extension unit descriptor */
     0x1C,                           /* Descriptor size */
@@ -221,8 +221,8 @@ const uint8_t HighSpeedConfigDescr[] = {
     0x80 | UVC_STREAM_ENDPOINT,     /* EP address for BULK video data */
     0x00,                           /* No dynamic format change supported */
     0x04,                           /* Output terminal ID : 4 */
-    0x00,                           /* No still image capture support. */
-    0x00,                           /* No hardware trigger support. */
+    0x00,                           /* No still image capture support */
+    0x00,                           /* No hardware trigger support */
     0x00,                           /* Hardware to initiate still image capture */
     0x01,                           /* Size of controls field : 1 byte */
     0x00,                           /* D2 : Compression quality supported */
@@ -258,7 +258,7 @@ const uint8_t HighSpeedConfigDescr[] = {
     0x2A, 0x2C, 0x0A, 0x00,         /* Default frame interval (in 100ns units): (1/15)x10^7 = 0x000A2C2A */
     0x01,                           /* Frame interval type : No of discrete intervals */
     0x2A, 0x2C, 0x0A, 0x00,         /* Default frame interval (in 100ns units): (1/15)x10^7 = 0x000A2C2A */
-    
+
     /* Class specific Uncompressed VS frame descriptor (640*480 VGA) @60 fps */
     0x1E,                           /* Descriptor size */
     0x24,                           /* Descriptor type*/
@@ -279,7 +279,7 @@ const uint8_t HighSpeedConfigDescr[] = {
     0x05,                           /* Endpoint descriptor type */
     0x80 | UVC_STREAM_ENDPOINT,     /* Endpoint address and description */
     0x02,                           /* Bulk Endpoint */
-    0x00,0x02,                      /* 512 Bytes Maximum Packet Size. */
+    0x00,0x02,                      /* 512 Bytes Maximum Packet Size */
     0x00,                           /* Servicing interval for data transfers */
 
 #if AUDIO_IF_EN
@@ -287,9 +287,9 @@ const uint8_t HighSpeedConfigDescr[] = {
     0x08,                           /* Descriptor size */
     0x0B,                           /* Interface association descr type */
     UAC_CONTROL_INTF_NUM,           /* I/f number of first video control i/f */
-    0x02,                           /* Number of interfaces. */
+    0x02,                           /* Number of interfaces */
     0x01,                           /* Function class: Audio */
-    0x00,                           /* Subclass: Undefined. */
+    0x00,                           /* Subclass: Undefined */
     0x00,                           /* Protocol : not used */
     0x00,                           /* String desc index for interface */
 
@@ -325,7 +325,7 @@ const uint8_t HighSpeedConfigDescr[] = {
     0x03, 0x00,                     /* Spatial location of the logical channels - Left Front and Right Front */
 #else
     0x01,                           /* Number of channels = 1 */
-    0x01, 0x00,                     /* Spatial location of the logical channel - Left Front. */
+    0x01, 0x00,                     /* Spatial location of the logical channel - Left Front */
 #endif /* STEREO_ENABLE */
     0x00,                           /* Channel names - Unused */
     0x00,                           /* String index for this descriptor - None */
@@ -484,7 +484,7 @@ const uint8_t MfgStringDescr[] = {
 USB_DESC_ATTRIBUTES uint8_t CyFxUSBProductDscr[64];
 
 const uint8_t ProdStringDescr[] = {
-    0x2A, 0x03,    
+    0x2A, 0x03,
     'E',  0x00,
     'Z',  0x00,
     '-',  0x00,
@@ -535,7 +535,7 @@ const uint8_t FullSpeedStringDescr[] = {
 
 /* Place this buffer as the last buffer so that no other variable / code shares
  * the same cache line. Do not add any other variables / arrays in this file.
- * This will lead to variables sharing the same cache line. */
+ * This will lead to variables sharing the same cache line */
 USB_DESC_ATTRIBUTES uint8_t CyFxUsbDscrAlignBuffer[32];
 
 void CopyDescriptorsToHBRam (void)
@@ -554,14 +554,14 @@ void CopyDescriptorsToHBRam (void)
 
 /**
  * \name Cy_USB_RegisterUsbDescriptors
- * \brief Function to register USB descriptors to USBD 
+ * \brief Function to register USB descriptors to USBD
  * \param pAppCtxt application layer context pointer.
  * \param usbSpeed USB device Speed
  * \return None
  */
 void Cy_USB_RegisterUsbDescriptors(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_usb_speed_t usbSpeed)
 {
-    /* Can be moved so that copy is only done once. */
+    /* Can be moved so that copy is only done once */
     CopyDescriptorsToHBRam();
 
     if ((pAppCtxt != NULL) && (pAppCtxt->pUsbdCtxt != NULL))  {

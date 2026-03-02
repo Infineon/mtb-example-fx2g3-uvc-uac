@@ -6,7 +6,7 @@
 *
 *******************************************************************************
 * \copyright
-* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2026), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -60,7 +60,7 @@ void Cy_UVC_SendI2cTable(const cy_stc_sensorConfig_t *sensorConfig, uint32_t cou
 
 /**
  * \name Cy_UVC_ImageSensorSetResolution
- * \brief This function Sets video resolution 
+ * \brief This function Sets video resolution
  * \param width Video width (in pixels)
  * \param height Video height (in pixels)
  * \retval None

@@ -6,7 +6,7 @@
 *
 *******************************************************************************
 * \copyright
-* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2026), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -24,12 +24,16 @@
 * limitations under the License.
 *******************************************************************************/
 
-#ifndef _CY_USB_I2C_H_
-#define _CY_USB_I2C_H_
+#ifndef _USB_I2C_H_
+#define _USB_I2C_H_
 
 #include "usb_app.h"
 
-#define FPGASLAVE_ADDR                 (0x0D)        //FPGA i2c address (Do not change)
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#define FPGASLAVE_ADDR                 (0x0D)        /* FPGA i2c address (Do not change) */
 
 /* I2C Related macro */
 #define I2C_READ                       (1)
@@ -44,7 +48,7 @@ extern cy_stc_scb_i2c_context_t I2C_context;
 
 /**
  * \name Cy_USB_I2CInit
- * \brief Fucntion to initialize I2C master
+ * \brief Function to initialize I2C master
  * \retval Does not return.
  */
 void Cy_USB_I2CInit (void);
@@ -95,4 +99,10 @@ cy_en_scb_i2c_status_t Cy_I2C_Write (uint16_t slaveAddress,uint16_t registerAddr
  */
 cy_en_scb_i2c_status_t Cy_APP_GetFPGAVersion(cy_stc_usb_app_ctxt_t *pAppCtxt);
 
-#endif //End _CY_USB_I2C_H_ 
+#if defined(__cplusplus)
+}
+#endif
+
+#endif /* _USB_I2C_H_ */
+
+/*[EOF]*/

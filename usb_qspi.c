@@ -6,7 +6,7 @@
 *
 *******************************************************************************
 * \copyright
-* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2026), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -34,12 +34,11 @@
 cy_stc_smif_context_t qspiContext;
 bool glIsFPGAConfigured = false;
 cy_en_smif_slave_select_t glSlaveSelectMode = CY_SMIF_SLAVE_SELECT_0;
-cy_en_flash_index_t glFlashMode = SPI_FLASH_0;
 #if FLASH_AT45D
 cy_en_passiveSerialMode_t glpassiveSerialMode = PASSIVE_x1;
 #else
 cy_en_passiveSerialMode_t glpassiveSerialMode = PASSIVE_x4;
-#endif
+#endif /* FLASH_AT45D */
 
 #if !FLASH_AT45D
 cy_en_smif_txfr_width_t   glCommandWidth[NUM_SPI_FLASH]     = {CY_SMIF_WIDTH_SINGLE, CY_SMIF_WIDTH_SINGLE, CY_SMIF_WIDTH_QUAD};
@@ -98,7 +97,7 @@ static cy_en_smif_status_t Cy_SPI_FlashReset(cy_en_flash_index_t flashIndex)
 
 /**
  * \name Cy_QSPI_WriteEnable
- * \brief   Function to Set write enable latch of the selected flash. 
+ * \brief   Function to Set write enable latch of the selected flash.
  *          This is needed before doing program and erase operations.
  * \param flashIndex SPI Flash Index
  * \retval status
@@ -107,10 +106,10 @@ static cy_en_smif_status_t Cy_QSPI_WriteEnable(cy_en_flash_index_t flashIndex)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
     uint8_t statusVal = 0;
-    
+
     if(flashIndex == DUAL_SPI_FLASH)
     {
-        DBG_APP_ERR("[%s]Invalid flashIndex. Access both flash memories separately\r\n",__func__);
+        DBG_APP_ERR("QSPI: Invalid flashIndex. Access both flash memories separately\r\n");
         return CY_SMIF_BAD_PARAM;
     }
 
@@ -151,7 +150,7 @@ static cy_en_smif_status_t Cy_QSPI_WriteEnable(cy_en_flash_index_t flashIndex)
     else
     {
         status = CY_SMIF_BUSY;
-        DBG_APP_ERR("Write Enable failed\r\n");
+        DBG_APP_ERR("QSPI: Write Enable failed %x\r\n",status);
     }
 #endif /* !FLASH_AT45D */
 
@@ -170,7 +169,7 @@ bool Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex)
     uint8_t statusVal;
     if(flashIndex == DUAL_SPI_FLASH)
     {
-        DBG_APP_ERR("[%s]Invalid flashIndex. Access both flash memories separately\r\n",__func__);
+        DBG_APP_ERR("QSPI: Invalid flashIndex. Access both flash memories separately\r\n");
         return CY_SMIF_BAD_PARAM;
     }
 
@@ -209,13 +208,13 @@ static cy_en_smif_status_t Cy_SPI_WriteConfigRegister(cy_en_flash_index_t flashI
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
     uint8_t dataArray[2] = {0};
 
-    dataArray[0] = 0; // Status Register
+    dataArray[0] = 0; /* Status Register */
     dataArray[1] = writeValue;
 
 
     if(flashIndex == DUAL_SPI_FLASH)
     {
-        DBG_APP_ERR("[%s]Invalid flashIndex. Access both flash memories separately\r\n",__func__);
+        DBG_APP_ERR("QSPI: Invalid flashIndex. Access both flash memories separately\r\n");
         return CY_SMIF_BAD_PARAM;
     }
 
@@ -223,7 +222,6 @@ static cy_en_smif_status_t Cy_SPI_WriteConfigRegister(cy_en_flash_index_t flashI
     Cy_SysLib_Delay(200);
     ASSERT_NON_BLOCK(CY_SMIF_SUCCESS == status, status);
 
-    DBG_APP_INFO("Write Config Register..\r\n");
     status = Cy_SMIF_TransmitCommand(SMIF_HW,
             CY_SPI_CONFIG_REG_WRITE_CMD_SFL,
             glCommandWidth[flashIndex],
@@ -238,7 +236,7 @@ static cy_en_smif_status_t Cy_SPI_WriteConfigRegister(cy_en_flash_index_t flashI
     {
         status = Cy_SMIF_TransmitDataBlocking(SMIF0, dataArray, 2, glReadWriteWidth[flashIndex], &qspiContext);
         ASSERT_NON_BLOCK(CY_SMIF_SUCCESS == status, status);
-        DBG_APP_INFO("Config Register Write: 0x%x\r\n", writeValue);
+        DBG_APP_INFO("QSPI: Config register write value: 0x%x\r\n", writeValue);
     }
     return status;
 }
@@ -256,11 +254,10 @@ static cy_en_smif_status_t Cy_SPI_ReadConfigRegister(cy_en_flash_index_t flashIn
 
     if((flashIndex == DUAL_SPI_FLASH) || (NULL == readValue))
     {
-        DBG_APP_ERR("[%s]Invalid flashIndex. Access both flash memories separately\r\n",__func__);
+        DBG_APP_ERR("QSPI: Invalid flashIndex. Access both flash memories separately\r\n");
         return CY_SMIF_BAD_PARAM;
     }
 
-    DBG_APP_INFO("Read Config Register..\r\n");
     status = Cy_SMIF_TransmitCommand(SMIF_HW,
             CY_SPI_CONFIG_REG_READ_CMD,
             glCommandWidth[flashIndex],
@@ -275,7 +272,7 @@ static cy_en_smif_status_t Cy_SPI_ReadConfigRegister(cy_en_flash_index_t flashIn
     {
         status =  Cy_SMIF_ReceiveDataBlocking(SMIF_HW, readValue, 1u, glReadWriteWidth[flashIndex], &qspiContext);
         ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
-        DBG_APP_INFO("Config Register Value: 0x%x\r\n", *readValue);
+        DBG_APP_INFO("QSPI: Config register read value: 0x%x\r\n", *readValue);
     }
     return status;
 }
@@ -294,14 +291,14 @@ cy_en_smif_status_t Cy_QSPI_Read(uint32_t address, uint8_t *rxBuffer, uint32_t l
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
     uint8_t addrArray[CY_APP_QSPI_NUM_ADDRESS_BYTES];
     uint8_t readCommand = CY_SPI_READ_CMD;
-    
-    if ((glCommandWidth[flashIndex] == CY_SMIF_WIDTH_QUAD) || 
+
+    if ((glCommandWidth[flashIndex] == CY_SMIF_WIDTH_QUAD) ||
         (glReadWriteWidth[flashIndex] == CY_SMIF_WIDTH_QUAD))
     {
         readCommand = CY_SPI_QPI_READ_CMD;
     }
 
-    DBG_APP_INFO("Cy_QSPI_Read :: %x %d %d \n\r",readCommand,glReadWriteWidth[flashIndex],address);
+    DBG_APP_INFO("QSPI :%x %d %d \r\n",readCommand,glReadWriteWidth[flashIndex],address);
 
     Cy_SPI_AddressToArray(address, addrArray, CY_APP_QSPI_NUM_ADDRESS_BYTES);
 
@@ -392,7 +389,7 @@ cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool quadE
     {
 
         Cy_SPI_ReadConfigRegister(flashIndex, &readValue);
-        DBG_APP_INFO("Cy_SPI_ReadConfigRegister %x \n\r:",readValue);
+        DBG_APP_INFO("QSPI: Config register read value %x \r\n:",readValue);
 
         Cy_SPI_WriteConfigRegister(flashIndex, readValue | 0x02);
 
@@ -407,31 +404,33 @@ cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool quadE
  * \name Cy_QSPI_Start
  * \brief Function to start the QSPI/SMIF block
  * \param pAppCtxt application layer context pointer
- * \param hbw_bufmgr HBDMA buffer manager pointer
  * \retval status
  */
-void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pAppCtxt,cy_stc_hbdma_buf_mgr_t *hbw_bufmgr)
+void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pAppCtxt)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
 
-    /* Change QSPI Clock to 150 MHz / <DIVIDER> value */
+    /* Change QSPI Clock to 75 MHz / <DIVIDER> value */
     Cy_SysClk_ClkHfDisable(1);
-    Cy_SysClk_ClkHfSetSource(1, CY_SYSCLK_CLKHF_IN_CLKPATH2);
-    Cy_SysClk_ClkHfSetDivider(1, CY_SYSCLK_CLKHF_NO_DIVIDE);
+    Cy_SysClk_ClkHfSetSource(1, CY_SYSCLK_CLKHF_IN_CLKPATH1);
+    Cy_SysClk_ClkHfSetDivider(1, CY_SYSCLK_CLKHF_DIVIDE_BY_2);
     Cy_SysClk_ClkHfEnable(1);
 
     /*Initialize SMIF Pins for QSPI*/
     Cy_QSPI_ConfigureSMIFPins(true);
 
     status = Cy_SMIF_Init(SMIF_HW, &qspiConfig, 10000u, &qspiContext);
-    ASSERT(CY_SMIF_SUCCESS == status, status);
+    if(CY_SMIF_SUCCESS == status)
+    {
+        Cy_SMIF_SetDataSelect(SMIF_HW, CY_SMIF_SLAVE_SELECT_0, CY_SMIF_DATA_SEL0);
+        Cy_SMIF_SetDataSelect(SMIF_HW, CY_SMIF_SLAVE_SELECT_1, CY_SMIF_DATA_SEL2);
 
-    Cy_SMIF_SetDataSelect(SMIF_HW, CY_SMIF_SLAVE_SELECT_0, CY_SMIF_DATA_SEL0);
-    Cy_SMIF_SetDataSelect(SMIF_HW, CY_SMIF_SLAVE_SELECT_1, CY_SMIF_DATA_SEL2);
-
-    Cy_SMIF_Enable(SMIF_HW, &qspiContext);
-
-    DBG_APP_INFO("Cy_USB_QSPIEnabled \n\r:");
+        Cy_SMIF_Enable(SMIF_HW, &qspiContext);
+        DBG_APP_INFO("QSPI: Enabled \r\n:");
+    }
+    else {
+        DBG_APP_INFO("QSPI: SMIF Init Failed Error: %x \r\n",status);
+    }
 }
 
 /**
@@ -646,7 +645,7 @@ void Cy_FPGAConfigPins(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t m
     cy_stc_gpio_pin_config_t pinCfg;
     memset((void *)&pinCfg, 0, sizeof(pinCfg));
 
-    /* Configure output GPIOs. */
+    /* Configure output GPIOs */
     pinCfg.driveMode = CY_GPIO_DM_STRONG_IN_OFF;
     pinCfg.hsiom = HSIOM_SEL_GPIO;
 
@@ -675,10 +674,6 @@ void Cy_FPGAConfigPins(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t m
     {
         Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_SSN_PORT, T20_SSN_PIN);
     }
-
-    Cy_LVDS_PhyGpioModeEnable(LVDSSS_LVDS, T20_PROGRAM_N_PORT,T20_PROGRAM_N_PIN,
-                                CY_LVDS_PHY_GPIO_OUTPUT, CY_LVDS_PHY_GPIO_NO_INTERRUPT);
-    Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_PROGRAM_N_PORT, T20_PROGRAM_N_PIN);
 
 #if CONFIG_CDONE_AS_INPUT
     Cy_LVDS_PhyGpioModeEnable(LVDSSS_LVDS, T20_CDONE_PORT,T20_CDONE_PIN,
@@ -709,7 +704,7 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
     {
         Cy_QSPI_ConfigureSMIFPins(false);
 
-        DBG_APP_INFO("Starting Active Serial FPGA Configuration\r\n");
+        DBG_APP_INFO("FPGA: Configuration - Active Serial \r\n");
 
         Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);
 
@@ -733,16 +728,16 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         {
             glIsFPGAConfigured = true;
             Cy_Debug_AddToLog(3, CYAN);
-            Cy_Debug_AddToLog (3,"FPGA Configuration Done \n\r");
+            Cy_Debug_AddToLog (3,"FPGA: Configuration Complete \r\n");
             Cy_Debug_AddToLog(3, COLOR_RESET);
         }
         else
         {
             /*Keep the FPGA in reset if the config fails. This is to prevent the FPGA
              *from taking control of the SPI lines which prevents FX2G3's access to QSPI Flash */
-            Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);        
+            Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);
             Cy_Debug_AddToLog(1, CYAN);
-            Cy_Debug_AddToLog (1,"FPGA Configuration Failed! \n\r");
+            Cy_Debug_AddToLog (1,"FPGA: Configuration Failed \r\n");
             Cy_Debug_AddToLog(1, COLOR_RESET);
         }
 
@@ -756,10 +751,10 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         uint32_t bitFileSize = EFINIX_MAX_CONFIG_FILE_SIZE;
 #else
         uint32_t bitFileSize = EFINIX_FPGA_SOC_MERGED_FILE_SIZE;
-#endif
-        
+#endif /* CONFIG_CDONE_AS_INPUT */
+
         Cy_Debug_AddToLog(3, CYAN);
-        Cy_Debug_AddToLog (3," Bit file Size %x \n\r",bitFileSize-FPGA_ADDRESS_OFFSET);
+        Cy_Debug_AddToLog (3,"FPGA: Bit file Size %x \r\n",bitFileSize-FPGA_ADDRESS_OFFSET);
         Cy_Debug_AddToLog(3, COLOR_RESET);
 
         uint32_t bitFileStartAddress = 0;
@@ -769,9 +764,9 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         uint8_t addrArray[CY_APP_QSPI_NUM_ADDRESS_BYTES];
         Cy_SPI_AddressToArray(bitFileStartAddress, addrArray, CY_APP_QSPI_NUM_ADDRESS_BYTES);
 
-        DBG_APP_INFO("Starting Passive Serial FPGA Configuration\r\n");
+        DBG_APP_INFO("FPGA: Configuration- Passive Serial\r\n");
 
-        Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);    
+        Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);
 
 
         Cy_SysLib_Delay(2);
@@ -792,7 +787,7 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         }
 #else
         Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_CDONE_PORT, T20_CDONE_PIN);
-#endif
+#endif /* CONFIG_CDONE_AS_INPUT */
 
 #if FLASH_AT45D
         /* Convert address and add dummy byte */
@@ -807,7 +802,7 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
                                         glSlaveSelectMode,
                                         CY_SMIF_TX_NOT_LAST_BYTE,
                                         &qspiContext);
-        
+
         if (status != CY_SMIF_SUCCESS)
         {
             Cy_Debug_AddToLog(1, "Error: Cy_SPI_ReadAllOperation read cmd 0x%x\r\n", status);
@@ -838,14 +833,14 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
 
         status = Cy_SMIF_SendDummyCycles(SMIF0, CY_APP_QSPI_QREAD_NUM_DUMMY_CYCLES_SFL);
         ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
-#endif /*FLASH_AT45D */
+#endif /* FLASH_AT45D */
 
-        Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);   
+        Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);
 
         Cy_SysLib_Delay(6); /*Minimum time between deassertion of CRESET_N to first valid configuration data.*/
 
         uint32_t cycles = MAX_DUMMY_CYCLES_COUNT;
-        uint32_t remainingCycles = (pAppCtxt->glpassiveSerialMode == PASSIVE_x4)? bitFileSize*2 : bitFileSize*8;
+        uint32_t remainingCycles = (glpassiveSerialMode == PASSIVE_x4)? bitFileSize*2 : bitFileSize*8;
 
         while (remainingCycles > 0)
         {
@@ -856,7 +851,7 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
                 ASSERT_NON_BLOCK(status == CY_SMIF_SUCCESS, status);
                 remainingCycles -= cycles;
             }
-        }  
+        }
         /* Extra clocks to get the FPGA into user mode */
         Cy_SMIF_TransmitDataBlocking(SMIF0, dummyBuf, DUMMY_CYCLE, CY_SMIF_WIDTH_SINGLE, &qspiContext);
 
@@ -881,12 +876,12 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         pinCfg.hsiom = HSIOM_SEL_GPIO;
 
         Cy_App_QSPIConfigureSMIFPins(false);
-#endif
+#endif /* CONFIG_CDONE_AS_INPUT */
 
         maxWait = 1000;
         cdoneVal = false;
         while (cdoneVal == false)
-        { 
+        {
             /* Check if CDONE is LOW */
             cdoneVal = Cy_LVDS_PhyGpioRead(LVDSSS_LVDS, T20_CDONE_PORT, T20_CDONE_PIN);
             Cy_SysLib_Delay(1);
@@ -902,14 +897,14 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         {
             glIsFPGAConfigured = true;
             Cy_Debug_AddToLog(3, CYAN);
-            Cy_Debug_AddToLog (3,"FPGA Configuration Done \n\r");
+            Cy_Debug_AddToLog (3,"FPGA: Configuration Complete \r\n");
             Cy_Debug_AddToLog(3, COLOR_RESET);
             DBG_APP_INFO("FPGA Soft Reset Done\r\n");
         }
         else
         {
             Cy_Debug_AddToLog(1, RED);
-            Cy_Debug_AddToLog (1,"FPGA Configuration Failed \n\r");
+            Cy_Debug_AddToLog (1,"FPGA: Configuration Failed \r\n");
             Cy_Debug_AddToLog(1, COLOR_RESET);
         }
 
@@ -918,7 +913,49 @@ bool Cy_FPGAConfigure(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_en_fpgaConfigMode_t mo
         /*Re-init SMIF pins. This should not affect the RISC-V boot
          *also as there is sufficient delay of 3 seconds and SOC SPI activity was seen for <2 secs*/
         Cy_App_QSPIConfigureSMIFPins(true);
-#endif
+#endif /* !CONFIG_CDONE_AS_INPUT */
+    }
+    return glIsFPGAConfigured;
+}
+
+/**
+ * \name Cy_IsFPGAConfigured
+ * \brief Function to check if FPGA is already configured
+ * \retval bool
+ */
+bool Cy_IsFPGAConfigured(void)
+{
+    uint32_t cdoneVal = 0;
+    uint32_t maxWait = 1000;
+
+    while (cdoneVal == false)
+    {
+        /*Check if CDONE is LOW*/
+        cdoneVal = Cy_LVDS_PhyGpioRead(LVDSSS_LVDS, T20_CDONE_PORT, T20_CDONE_PIN);
+
+        Cy_SysLib_Delay(1);
+        maxWait--;
+        if (!maxWait)
+        {
+            break;
+        }
+    }
+
+    if (cdoneVal)
+    {
+        glIsFPGAConfigured = true;
+        Cy_Debug_AddToLog(3, CYAN);
+        Cy_Debug_AddToLog (3,"FPGA: Configured \r\n");
+        Cy_Debug_AddToLog(3, COLOR_RESET);
+    }
+    else
+    {
+        /*Keep the FPGA in reset if the config fails. This is to prevent the FPGA
+         *from taking control of the SPI lines which prevents FX2G3's access to QSPI Flash */
+        Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, T20_INIT_RESET_PORT, T20_INIT_RESET_PIN);
+        Cy_Debug_AddToLog(1, CYAN);
+        Cy_Debug_AddToLog (1,"FPGA: Not Configured \r\n");
+        Cy_Debug_AddToLog(1, COLOR_RESET);
     }
     return glIsFPGAConfigured;
 }

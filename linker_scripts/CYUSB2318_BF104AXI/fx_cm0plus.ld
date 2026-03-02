@@ -76,7 +76,7 @@ MEMORY
     /* public_ram        (rw)    : ORIGIN = %REGION_START_ADDRESS%, LENGTH = %REGION_SIZE% */
 
 
-    /* The following regions define device specific memory regions and must not be changed. */
+    /* The following regions define device specific memory regions and must not be changed */
     sflash_user_data  (rx)    : ORIGIN = 0x16000800, LENGTH = 0x800        /* Supervisory flash: User data */
     sflash_nar        (rx)    : ORIGIN = 0x16001A00, LENGTH = 0x200        /* Supervisory flash: Normal Access Restrictions (NAR) */
     sflash_public_key (rx)    : ORIGIN = 0x16005A00, LENGTH = 0xC00        /* Supervisory flash: Public Key */
@@ -161,21 +161,21 @@ SECTIONS
         *(SORT(.dtors.*))
         *(.dtors)
 
-        /* Read-only code (constants). */
+        /* Read-only code (constants) */
         *(.rodata .rodata.* .constdata .constdata.* .conststring .conststring.*)
 
         KEEP(*(.eh_frame*))
     } > flash
 
 
-    .ARM.extab :
+    .ARM.extab (READONLY) :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
     } > flash
 
     __exidx_start = .;
 
-    .ARM.exidx :
+    .ARM.exidx (READONLY) :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
     } > flash
@@ -185,7 +185,7 @@ SECTIONS
     /* To copy multiple ROM to RAM sections,
      * uncomment .copy.table section and,
      * define __STARTUP_COPY_MULTIPLE in startup_fx2g3_cm0plus.S */
-    .copy.table :
+    .copy.table (READONLY) :
     {
         . = ALIGN(4);
         __copy_table_start__ = .;
@@ -212,7 +212,7 @@ SECTIONS
     /* To clear multiple BSS sections,
      * uncomment .zero.table section and,
      * define __STARTUP_CLEAR_BSS_MULTIPLE in startup_fx2g3_cm0plus.S */
-    .zero.table :
+    .zero.table (READONLY) :
     {
         . = ALIGN(4);
         __zero_table_start__ = .;
@@ -272,7 +272,7 @@ SECTIONS
     } > ram AT>flash
 
 
-    /* Contents from the descSection need to be placed in the dmabuf region. */
+    /* Contents from the descSection need to be placed in the dmabuf region */
     .hbRamData :
     {
         . = ALIGN(4);
@@ -283,7 +283,7 @@ SECTIONS
     } > dmabuf AT>flash
 
 
-    /* Un-initialized memory buffers to be placed in High BandWidth RAM. */
+    /* Un-initialized memory buffers to be placed in High BandWidth RAM */
     .hbRamBuf (NOLOAD) :
     {
         . = ALIGN(4);
@@ -291,7 +291,7 @@ SECTIONS
     } > dmabuf
 
 
-    /* Roll back to end of data segment in System RAM. */
+    /* Roll back to end of data segment in System RAM */
     . = __data_end__;
 
 
@@ -303,7 +303,7 @@ SECTIONS
       KEEP(*(.noinit))
     } > ram
 
-    /* Contents from the descSection need to be placed in the dmabuf region. */
+    /* Contents from the descSection need to be placed in the dmabuf region */
     .dmabuf : ALIGN(8)
     {
         KEEP(*(.descSection))
@@ -343,7 +343,7 @@ SECTIONS
     } > ram
 
 
-    /* To use unprotected public RAM, uncomment the following .cy_sharedmem section placement.*/
+    /* To use unprotected public RAM, uncomment the following .cy_sharedmem section placement */
     /*
     .cy_sharedmem (NOLOAD):
     {
@@ -436,7 +436,7 @@ SECTIONS
 }
 
 
-/* The following symbols used by the cymcuelftool. */
+/* The following symbols used by the cymcuelftool */
 /* Flash */
 __cy_memory_0_start    = 0x10000000;
 __cy_memory_0_length   = 0x00080000;

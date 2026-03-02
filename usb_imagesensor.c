@@ -6,7 +6,7 @@
 *
 *******************************************************************************
 * \copyright
-* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2026), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -414,12 +414,12 @@ void Cy_UVC_SendI2cTable(const cy_stc_sensorConfig_t *sensorConfig, uint32_t cou
         regAdd   = sensorConfig[looper].sensorAddr;
         regValue = sensorConfig[looper].sensorVal;
         status = Cy_I2C_Write(SENSOR_SLAVE_ADDR, regAdd, regValue,SENSOR_I2C_ADDRESS_WIDTH,SENSOR_I2C_DATA_WIDTH);
-    
+
         ASSERT_NON_BLOCK(CY_SCB_I2C_SUCCESS == status, status);
         if (status != CY_SCB_I2C_SUCCESS)
         {
             glIsSensorConfigured = false;
-            DBG_APP_INFO("PCAMV2 Sensor Config failed \n\r");           
+            DBG_APP_INFO("UVC: PCAMV2 Sensor Config failed \r\n");
             break;
         }
     }
@@ -428,20 +428,20 @@ void Cy_UVC_SendI2cTable(const cy_stc_sensorConfig_t *sensorConfig, uint32_t cou
 
 /**
  * \name Cy_UVC_ImageSensorInit
- * \brief Initialize image sensor 
+ * \brief Initialize image sensor
  * \retval None
  */
 void Cy_UVC_ImageSensorInit(void)
 {
     uint32_t count = 0;
-    
+
     count = sizeof(arraySensorInit_rpcamv2)/sizeof(cy_stc_sensorConfig_t);
     Cy_UVC_SendI2cTable(arraySensorInit_rpcamv2,count);
 }/*End of Cy_UVC_ImageSensorInit()*/
 
 /**
  * \name Cy_UVC_ImageSensorSetResolution
- * \brief This function Sets video resolution 
+ * \brief This function Sets video resolution
  * \param width Video width (in pixels)
  * \param height Video height (in pixels)
  * \retval None
@@ -450,7 +450,7 @@ void Cy_UVC_ImageSensorSetResolution(uint32_t width,uint32_t height)
 {
     uint32_t count = 0;
 
-    DBG_APP_INFO("Resolution %d x %d\r\n",width,height);
+    DBG_APP_INFO("UVC: Resolution %d x %d\r\n",width,height);
 
     if((width == H_RES_1920) && (height == V_RES_1080))
     {
@@ -467,7 +467,7 @@ void Cy_UVC_ImageSensorSetResolution(uint32_t width,uint32_t height)
     }
     else
     {
-        LOG_ERROR("Error:Unsupported resolution.Try 1920x1080, 1280x720 or 640x480\r\n");
+        LOG_ERROR("UVC:Unsupported resolution.Try 1920x1080 or 640x480\r\n");
     }
 }
 
@@ -480,12 +480,12 @@ void Cy_UVC_ConfigureImageSensor(void)
 {
     glIsSensorConfigured = true;
 
-    DBG_APP_INFO("Configure Image Sensor \n\r");
+    DBG_APP_INFO("UVC: Configure Image Sensor \r\n");
     Cy_LVDS_PhyGpioClr(LVDSSS_LVDS, PCAMV2_POWER_PORT, PCAMV2_POWER_PIN);
-    Cy_SysLib_Delay(100);   
+    Cy_SysLib_Delay(100);
     Cy_LVDS_PhyGpioSet(LVDSSS_LVDS, PCAMV2_POWER_PORT, PCAMV2_POWER_PIN);
-    Cy_SysLib_Delay(100);   
-    
+    Cy_SysLib_Delay(100);
+
     Cy_UVC_ImageSensorInit();
     /* pcam v2 works on 1080p */
     Cy_UVC_ImageSensorSetResolution(H_RES_1920, V_RES_1080);

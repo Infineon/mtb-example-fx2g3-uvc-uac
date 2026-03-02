@@ -116,7 +116,7 @@ LR_IROM1 FLASH_START FLASH_SIZE
 
 
 
-/* The following symbols used by the cymcuelftool. */
+/* The following symbols used by the cymcuelftool */
 /* Flash */
 #define __cy_memory_0_start 0x10000000
 #define __cy_memory_0_length  0x00040000

@@ -128,13 +128,13 @@ LR_IROM2 SIGNATURE_START SIGNATURE_SIZE
 }
 
 
-/* The following symbols used by the cymcuelftool. */
+/* The following symbols used by the cymcuelftool */
 /* Flash */
 #define __cy_memory_0_start     0x10008000
 #define __cy_memory_0_length    0x00078000
 #define __cy_memory_0_row_size  0x200
 
-/* Symbols provided to cymcuelftool for checksum generation. */
+/* Symbols provided to cymcuelftool for checksum generation */
 #define __cy_app_verify_start   0x10008000
 #define __cy_app_verify_length  0x77E00
 #define __cy_app_signature_addr 0x1007FE00

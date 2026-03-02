@@ -5,7 +5,7 @@ This code example demonstrates the implementation of a USB Video Class (UVC) 1.1
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-fx2g3-uvc-uac)
 
-[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyNDA2ODgiLCJTcGVjIE51bWJlciI6IjAwMi00MDY4OCIsIkRvYyBUaXRsZSI6IkVaLVVTQiZ0cmFkZTsgRlgyRzM6IFVTQiBWaWRlbyBDbGFzcyAoVVZDKSBhcHBsaWNhdGlvbiIsInJpZCI6InN1a3UiLCJEb2MgdmVyc2lvbiI6IjEuMC4zIiwiRG9jIExhbmd1YWdlIjoiRW5nbGlzaCIsIkRvYyBEaXZpc2lvbiI6Ik1DRCIsIkRvYyBCVSI6IldJUkVEIiwiRG9jIEZhbWlseSI6IkhTTFNfVVNCIn0=)
+[Provide feedback on this code example.](https://yourvoice.infineon.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyNDA2ODgiLCJTcGVjIE51bWJlciI6IjAwMi00MDY4OCIsIkRvYyBUaXRsZSI6IkVaLVVTQiZ0cmFkZTsgRlgyRzM6IFVTQiBWaWRlbyBDbGFzcyAoVVZDKSBhcHBsaWNhdGlvbiIsInJpZCI6InN1bWl0Lmt1bWFyQGluZmluZW9uLmNvbSIsIkRvYyB2ZXJzaW9uIjoiMS4wLjQiLCJEb2MgTGFuZ3VhZ2UiOiJFbmdsaXNoIiwiRG9jIERpdmlzaW9uIjoiTUNEIiwiRG9jIEJVIjoiV0lSRUQiLCJEb2MgRmFtaWx5IjoiSFNMU19VU0IifQ==)
 
 
 ## Requirements
@@ -48,6 +48,7 @@ Install the **EZ-USB&trade; FX Control Center** (Alpha) application from [Infine
 
 
 ## Using the code example
+
 
 
 ### Create the project
@@ -169,11 +170,11 @@ Perform the following steps to build this code example for a different, supporte
 
 4. Click **Save**
 
-   This closes the **BSP Assistant** tool.
+   This closes the **BSP Assistant** tool
 
 5. Navigate the IDE's **Explorer** and delete the *GeneratedSource* folder (if available), at *`<bsp-root-folder>`/bsps/TARGET_APP_KIT_FX2G3_104LGA/*
 
-   > **Note:** For products `CYUSB2315-BF104AXI` and `CYUSB2316-BF104AXI`, additionally delete the `*.cyqspi` file from the config/ directory
+   > **Note:** For products `CYUSB2315-BF104AXI` and `CYUSB2316-BF104AXI`, additionally delete the `*.cyqspi` file from the *config* directory
 
 6. Launch the **Device Configurator** tool
 
@@ -194,9 +195,40 @@ b. In **main.c**, modify the SCB configuration by changing `LOGGING_SCB` from `(
 c. Launch the Device Configurator tool to disable `SCB4`, and enable `SCB0` for UART. Set `921600` baud, `9` Oversample, and use the `16 bit Divider 0 clk` clock
 
 
+## Compile-time configurations
+
+Application functionality can be customized by setting variables in *Makefile* or by configuring them through `make` CLI arguments.
+
+- Run the `make build` command or build the project in your IDE to compile the application and generate a USB bootloader-compatible binary. This binary can be programmed onto the EZ-USB&trade; FX2G3 device using the EZ-USB&trade; FX Control Center application
+
+- Run the `make build CORE=CM0P` command or set the variable in *Makefile* to compile and generate the binary for the Cortex&reg; M0+ core. By default, `CORE` is set as `CM4` and the binary is compiled and generated for the Cortex&reg; M4 core
+
+- Choose between the **Arm&reg; Compiler** or the **GNU Arm&reg; Embedded Compiler** build toolchains by setting the `TOOLCHAIN` variable in *Makefile* to `ARM` or `GCC_ARM` respectively. If you set it to `ARM`, ensure to set `CY_ARM_COMPILER_DIR` as a make variable or environment variable, pointing to the path of the compiler's root directory
+
+- Run the `make build REV02=no` command or set the variable in *Makefile* to compile the application and generate the binary compatible with the REV01 version of the EZ-USB&trade; FX2G3 kit
+
+> **Note:** If the REV02 kit is used, FPGA is configured using SMIF in x4 or Quad mode else (for REV01) FPGA is configured using SMIF in x1 or Single mode.
+
+By default, the application is configured to receive data from a 16-bit wide LVCMOS interface in SDR mode and make a USBHS data connection. Additional settings can be configured through macros specified by the `DEFINES` variable in *Makefile*:
+
+**Table 1. Macro description**
+
+ Macro name        |  Description                          | Allowed values
+ :--------         | :-------------                        | :------------
+ BUS_WIDTH_16      | Select the LVCMOS bus width           | 1u for 16-bit <br> 0u for 8-bit bus width
+ INTERLEAVE_EN     | Enable GPIF thread interleaving       | 1u to enable GPIF thread interleaving <br> 0u to select single thread
+ PRE_ADDED_HEADER  | UVC header addition                   | 1u for FPGA added header <br> 0u for EZ-USB&trade; FX2G3 added header
+ AUDIO_IF_EN       | Enable integrated UAC function        | 1u to enable <br> 0u to disable
+ STEREO_ENABLE     | Enable audio in stereo mode           | 1u for stereo audio <br> 0u for mono audio
+ MIPI_SOURCE_ENABLE| Enable MIPI video source              | 1u if MIPI source is present <br> 0u for FPGA-generated colorbar
+ USBFS_LOGS_ENABLE | Enable debug logs through USBFS port  | 1u for debug logs over USBFS <br> 0u for debug logs over UART (SCB4)
+ FPGA_CONFIG_EN    | Enable FPGA configuration             | 1u for enabling fpga configuration through EZ-USB&trade; FX2G3 <br> 0u to disable
+ UVC_INMEM_EN      | Enable firmware generated colorbar    |  1u for enabling firmware generated colorbar <br> 0u to enable FPGA generated colorbar
+
+
 ## Operation
 
-**Note:** This code example has been tested with Windows, Linux, and macOS hosts
+> **Note:** This code example has been tested with Windows, Linux, and macOS hosts.
 
 1. Connect the board (J2) to your PC using the provided USB cable
 
@@ -214,8 +246,8 @@ c. Launch the Device Configurator tool to disable `SCB4`, and enable `SCB0` for 
 
    2. Open **EZ-USB&trade; FX Control Center** application
       The **EZ-USB&trade; FX2G3** device displays as **EZ-USB&trade; FX BOOTLOADER**
-      
-   3. Select the **EZ-USB&trade; FX BOOTLOADER** device in **EZ-USB&trade; FX Control Center** 
+
+   3. Select the **EZ-USB&trade; FX BOOTLOADER** device in **EZ-USB&trade; FX Control Center**
 
    4. Navigate to **Program** > **Internal Flash**
 
@@ -228,16 +260,16 @@ c. Launch the Device Configurator tool to disable `SCB4`, and enable `SCB0` for 
 
    9. Browse the FPGA binary file in *\<CE Title>/BitFile* folder based on the configuration
 
-   10. Once the FPGA binary programming is successful, return to the USB bootloader mode. <br>
-      Once the firmware binary has been programmed onto the EZ-USB&trade; FX2G3 device flash, the bootloader will keep transferring control to the application on every subsequent reset
+   10. Once the FPGA binary programming is successful, return to the USB bootloader mode <br>
+       Once the firmware binary has been programmed onto the EZ-USB&trade; FX2G3 device flash, the bootloader will keep transferring control to the application on every subsequent reset
 
    11. To return the control to USB bootloader, press the **BOOT MODE/PMODE (SW1)** switch on **KIT_FX2G3_104LGA DVK**<br>
-      This keeps the device in the bootloader mode instead of booting into the application while the device is being reset or power cycled
+       This keeps the device in the bootloader mode instead of booting into the application while the device is being reset or power cycled
 
    12. Select the **FX Bootloader** device in **EZ-USB&trade; FX Control Center** and navigate to **Program** > **Internal Flash**
 
    13. Navigate to the */build/APP_KIT_FX2G3_104LGA/Release/* folder within the CE directory and locate the *.hex* file, and program <br>
-      
+
    14. Confirm if the programming is successful in the log window of **EZ-USB&trade; FX Control Center**
 
 5. After programming, the application starts automatically. Confirm that the following title is displayed on the UART terminal:
@@ -249,7 +281,6 @@ c. Launch the Device Configurator tool to disable `SCB4`, and enable `SCB0` for 
 
 6. Open any third party camera application, select the EZ-USB&trade; FX2G3 device and video resolution to stream the video
    By default, the device streams 1K (1920x1080 \~15fps) video data
-
 
 ## Debugging
 
@@ -281,7 +312,7 @@ To enable debug logs on UART, set the **USBFS_LOGS_ENABLE** compiler flag to '0u
 
 The verbosity of the debug log output can be modified by setting the `DEBUG_LEVEL` macro in the *main.c* file with the values shown in **Table 1**.
 
-**Table 1. Debug values**
+**Table 2. Debug values**
 
  Macro value  | Description
  :--------    | :-------------
@@ -305,9 +336,9 @@ This code example demonstrates the implementation of the USB Video Class (UVC) s
 ### Features of the application
 
 - **USB specifications:** USB 2.0 (Hi-Speed)
-   > **Note:** UVC and UAC functions are not supported in USB Full-Speed connections.
+   > **Note:** UVC and UAC functions are not supported in USB Full-Speed connections
 - **Video format:** Uncompressed YUY2 (YUYV)
-- **Video resolutions:** 
+- **Video resolutions:**
    - USB 2.0 (HS): 1920X1080 (1K), 640X480 (VGA)
 - Supports video streaming using PCAM v2 image sensor
    >  **Note:** This code example currently does not implement any UVC control functions such as brightness, contrast, exposure, etc.
@@ -332,12 +363,12 @@ This application demonstrates the following:
 
 #### Video streaming
 
-- The application enables EP 1-IN as Bulk endpoints with a maximum packet size of 512 bytes
+- The application enables EP 1-IN as bulk endpoints with a maximum packet size of 512 bytes
 - The device receives the video data through LVCMOS Socket 0 and sends it on EP 1-IN
 - Four DMA buffers of 61440 byte size are used to hold the data while it is being forwarded to USB
 
 
-#### Modes of UVC header addition 
+#### Modes of UVC header addition
 
 A 32-byte UVC header is added to each buffer containing 61408 bytes of video data and the resulting 61440 bytes are sent to the USB host.
 
@@ -351,7 +382,7 @@ By default, the application is configured for **Firmware-added header** and can 
 
 The application flow involves four main steps:
 
-   - Initialization 
+   - Initialization
    - USB device enumeration
    - UVC data transfer
    - integrated UAC data transfer
@@ -408,7 +439,7 @@ During initialization, the following steps are performed:
 
 This code example uses a Synchronous Slave FIFO interface and the connections are as follows:
 
-**Table 2. Control signal usage in LVCMOS Slave FIFO state machine**
+**Table 3. Control signal usage in LVCMOS Slave FIFO state machine**
 
 EZ-USB&trade; FX2G3 pin         | Function            | Description
 :-------------    | :------------       | :--------------
@@ -439,41 +470,12 @@ The P9.0 and P9.1 pins of the EZ-USB&trade; FX2G3 device are used to interface t
 - P9.0 is the clock output from the EZ-USB&trade; FX2G3 device, which is generated at 3.072 MHz
 - P9.1 is the data input from the PDM microphones to the EZ-USB&trade; FX2G3 device
 
-Connect a pair of microphones in stereo configuration. Selection between mono and stereo microphone configuration is done using the STEREO_ENABLE pre-processor setting, which can be updated through the *makefile*. By default, the interface is configured for mono operation. 
-
-
-## Compile-time configurations
-
-Application functionality can be customized by setting variables in *Makefile* or by configuring them through `make` CLI arguments.
-
-- Run the `make build` command or build the project in your IDE to compile the application and generate a USB bootloader-compatible binary. This binary can be programmed onto the EZ-USB&trade; FX2G3 device using the EZ-USB&trade; FX Control Center application
-
-- Run the `make build CORE=CM0P` command or set the variable in *Makefile* to compile and generate the binary for the Cortex&reg; M0+ core. By default, `CORE` is set as `CM4` and the binary is compiled and generated for the Cortex&reg; M4 core
-
-- Choose between the **Arm&reg; Compiler** or the **GNU Arm&reg; Embedded Compiler** build toolchains by setting the `TOOLCHAIN` variable in *Makefile* to `ARM` or `GCC_ARM` respectively. If you set it to `ARM`, ensure to set `CY_ARM_COMPILER_DIR` as a make variable or environment variable, pointing to the path of the compiler's root directory
-
-- Run the `make build REV02=no` command or set the variable in *Makefile* to compile the application and generate the binary compatible with the REV01 version of the EZ-USB&trade; FX2G3 kit
-
-> **Note:** If the REV02 kit is used, FPGA is configured using SMIF in x4 or Quad mode else (for REV01) FPGA is configured using SMIF in x1 or Single mode.
-
-By default, the application is configured to receive data from a 16-bit wide LVCMOS interface in SDR mode and make a USBHS data connection. Additional settings can be configured through macros specified by the `DEFINES` variable in *Makefile*:
-
-**Table 3. Macro description**
-
- Macro name        |  Description                          | Allowed values
- :--------         | :-------------                        | :------------
- BUS_WIDTH_16      | Select the LVCMOS bus width           | 1u for 16-bit <br> 0u for 8-bit bus width
- INTERLEAVE_EN     | Enable GPIF thread interleaving       | 1u to enable GPIF thread interleaving <br> 0u to select single thread
- PRE_ADDED_HEADER  | UVC header addition                   | 1u for FPGA added header <br> 0u for EZ-USB&trade; FX2G3 added header
- AUDIO_IF_EN       | Enable integrated UAC function        | 1u to enable <br> 0u to disable
- STEREO_ENABLE     | Enable audio in stereo mode           | 1u for stereo audio <br> 0u for mono audio
- MIPI_SOURCE_ENABLE| Enable MIPI video source              | 1u if MIPI source is present <br> 0u for FPGA-generated colorbar
- USBFS_LOGS_ENABLE | Enable debug logs through USBFS port  | 1u for debug logs over USBFS <br> 0u for debug logs over UART (SCB4)
+Connect a pair of microphones in stereo configuration. Selection between mono and stereo microphone configuration is done using the STEREO_ENABLE pre-processor setting, which can be updated through the *makefile*. By default, the interface is configured for mono operation.
 
 
 ## FPGA BitFile information
 
-The FPGA binary in *BitFile* folder of the project can be programmed to an external flash on the EZ-USB&trade; FX2G3 DVK using the *mtb-example-fx2g3-flash-loader* firmware. 
+The FPGA binary in *BitFile* folder of the project can be programmed to an external flash on the EZ-USB&trade; FX2G3 DVK using the *mtb-example-fx2g3-flash-loader* firmware.
 
 Follow these steps to program the binary file to the external flash:
 
@@ -483,11 +485,11 @@ Follow these steps to program the binary file to the external flash:
 
 **Table 4. BitFile description**
 
-BitFile                                         | Description   
-:--------------------                           | :----------------         
-*FX2G3_Design_PassiveX1_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV01 kit        
+BitFile                                         | Description
+:--------------------                           | :----------------
+*FX2G3_Design_PassiveX1_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV01 kit
 *FX2G3_Design_PassiveX1_8Bit_LVCMOS_RX.bin*     | LVCMOS RX 8-bit for REV01 kit
-*FX2G3_Design_PassiveX4_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV02 kit (default)          
+*FX2G3_Design_PassiveX4_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV02 kit (default)
 *FX2G3_Design_PassiveX4_8Bit_LVCMOS_RX.bin*     | LVCMOS RX 8-bit for REV02 kit
 
 <br>
@@ -510,7 +512,7 @@ EZ-USB&trade; FX2G3 pin        | Function            | Description
 :-------------   | :------------       | :--------------
 GPIO5            | CDONE#              | Active high signal. FPGA asserts when FPGA configuration is completed
 GPIO6            | INT_RESET#          | Active low signal. EZ-USB&trade; FX device asserts to reset the FPGA
-GPIO7            | PROG#               | Active low FPGA program signal
+GPIO10           | SSN#                | FPGA configuration type selection
 <br>
 
 
@@ -518,9 +520,10 @@ GPIO7            | PROG#               | Active low FPGA program signal
 
 **Table 6. Application file description**
 
-File                                | Description   
-:-------------                      | :------------                         
+File                                | Description
+:-------------                      | :------------
 *gpif_header_lvcmos.h*              | Generated Header file for GPIF state configuration for LVCMOS interface
+*usb_inmem.c*                       | C source file implementing firmware generated colorbar image
 *usb_app.c*                         | C source file implementing UVC 1.1 application logic
 *usb_app.h*                         | Header file for application data structures and functions declaration
 *usb_uvc_device.h*                  | Header file with UVC application constants and the video frame configurations
@@ -571,9 +574,9 @@ Document title: *CE240688* – *EZ-USB&trade; FX2G3: USB video class (UVC) appli
  1.0.1   | Updated for REV02 Kit
  1.0.2   | Updated for CM0+
  1.0.3   | Updated to use the example with other products
+ 1.0.4   | Updated data handlers to use new DMA APIs from USBFXStack
+
 <br>
-
-
 
 All referenced product or service names and trademarks are the property of their respective owners.
 
@@ -583,8 +586,7 @@ PSOC&trade;, formerly known as PSoC&trade;, is a trademark of Infineon Technolog
 
 ---------------------------------------------------------
 
-© Cypress Semiconductor Corporation, 2025. This document is the property of Cypress Semiconductor Corporation, an Infineon Technologies company, and its affiliates ("Cypress").  This document, including any software or firmware included or referenced in this document ("Software"), is owned by Cypress under the intellectual property laws and treaties of the United States and other countries worldwide.  Cypress reserves all rights under such laws and treaties and does not, except as specifically stated in this paragraph, grant any license under its patents, copyrights, trademarks, or other intellectual property rights.  If the Software is not accompanied by a license agreement and you do not otherwise have a written agreement with Cypress governing the use of the Software, then Cypress hereby grants you a personal, non-exclusive, nontransferable license (without the right to sublicense) (1) under its copyright rights in the Software (a) for Software provided in source code form, to modify and reproduce the Software solely for use with Cypress hardware products, only internally within your organization, and (b) to distribute the Software in binary code form externally to end users (either directly or indirectly through resellers and distributors), solely for use on Cypress hardware product units, and (2) under those claims of Cypress's patents that are infringed by the Software (as provided by Cypress, unmodified) to make, use, distribute, and import the Software solely for use with Cypress hardware products.  Any other use, reproduction, modification, translation, or compilation of the Software is prohibited.
+(c) 2026, Infineon Technologies AG, or an affiliate of Infineon Technologies AG. All rights reserved.
+This software, associated documentation and materials ("Software") is owned by Infineon Technologies AG or one of its affiliates ("Infineon") and is protected by and subject to worldwide patent protection, worldwide copyright laws, and international treaty provisions. Therefore, you may use this Software only as provided in the license agreement accompanying the software package from which you obtained this Software. If no license agreement applies, then any use, reproduction, modification, translation, or compilation of this Software is prohibited without the express written permission of Infineon.
 <br>
-TO THE EXTENT PERMITTED BY APPLICABLE LAW, CYPRESS MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO THIS DOCUMENT OR ANY SOFTWARE OR ACCOMPANYING HARDWARE, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  No computing device can be absolutely secure.  Therefore, despite security measures implemented in Cypress hardware or software products, Cypress shall have no liability arising out of any security breach, such as unauthorized access to or use of a Cypress product. CYPRESS DOES NOT REPRESENT, WARRANT, OR GUARANTEE THAT CYPRESS PRODUCTS, OR SYSTEMS CREATED USING CYPRESS PRODUCTS, WILL BE FREE FROM CORRUPTION, ATTACK, VIRUSES, INTERFERENCE, HACKING, DATA LOSS OR THEFT, OR OTHER SECURITY INTRUSION (collectively, "Security Breach").  Cypress disclaims any liability relating to any Security Breach, and you shall and hereby do release Cypress from any claim, damage, or other liability arising from any Security Breach.  In addition, the products described in these materials may contain design defects or errors known as errata which may cause the product to deviate from published specifications. To the extent permitted by applicable law, Cypress reserves the right to make changes to this document without further notice. Cypress does not assume any liability arising out of the application or use of any product or circuit described in this document. Any information provided in this document, including any sample design information or programming code, is provided only for reference purposes.  It is the responsibility of the user of this document to properly design, program, and test the functionality and safety of any application made of this information and any resulting product.  "High-Risk Device" means any device or system whose failure could cause personal injury, death, or property damage.  Examples of High-Risk Devices are weapons, nuclear installations, surgical implants, and other medical devices.  "Critical Component" means any component of a High-Risk Device whose failure to perform can be reasonably expected to cause, directly or indirectly, the failure of the High-Risk Device, or to affect its safety or effectiveness.  Cypress is not liable, in whole or in part, and you shall and hereby do release Cypress from any claim, damage, or other liability arising from any use of a Cypress product as a Critical Component in a High-Risk Device. You shall indemnify and hold Cypress, including its affiliates, and its directors, officers, employees, agents, distributors, and assigns harmless from and against all claims, costs, damages, and expenses, arising out of any claim, including claims for product liability, personal injury or death, or property damage arising from any use of a Cypress product as a Critical Component in a High-Risk Device. Cypress products are not intended or authorized for use as a Critical Component in any High-Risk Device except to the limited extent that (i) Cypress's published data sheet for the product explicitly states Cypress has qualified the product for use in a specific High-Risk Device, or (ii) Cypress has given you advance written authorization to use the product as a Critical Component in the specific High-Risk Device and you have signed a separate indemnification agreement.
-<br>
-Cypress, the Cypress logo, and combinations thereof, ModusToolbox, PSoC, CAPSENSE, EZ-USB, F-RAM, and TRAVEO are trademarks or registered trademarks of Cypress or a subsidiary of Cypress in the United States or in other countries. For a more complete list of Cypress trademarks, visit www.infineon.com. Other names and brands may be claimed as property of their respective owners.
+Disclaimer: UNLESS OTHERWISE EXPRESSLY AGREED WITH INFINEON, THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ALL WARRANTIES OF NON-INFRINGEMENT OF THIRD-PARTY RIGHTS AND IMPLIED WARRANTIES SUCH AS WARRANTIES OF FITNESS FOR A SPECIFIC USE/PURPOSE OR MERCHANTABILITY. Infineon reserves the right to make changes to the Software without notice. You are responsible for properly designing, programming, and testing the functionality and safety of your intended application of the Software, as well as complying with any legal requirements related to its use. Infineon does not guarantee that the Software will be free from intrusion, data theft or loss, or other breaches (“Security Breaches”), and Infineon shall have no liability arising out of any Security Breaches. Unless otherwise explicitly approved by Infineon, the Software may not be used in any application where a failure of the Product or any consequences of the use thereof can reasonably be expected to result in personal injury.

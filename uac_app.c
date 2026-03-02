@@ -7,7 +7,7 @@
 *
 *******************************************************************************
 * \copyright
-* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2026), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -37,7 +37,7 @@
 #include "cy_debug.h"
 #if AUDIO_IF_EN
 
-/* Set to 1 to enable internal test data generation instead of connection to the PDM microphone. */
+/* Set to 1 to enable internal test data generation instead of connection to the PDM microphone */
 #define PDM_TEST_GEN_EN (0u)
 
 const cy_stc_pdm_pcm_fir_coeff_t FIR0[] = {
@@ -69,7 +69,7 @@ void Cy_UAC_PdmInit (void)
     cy_stc_pdm_pcm_config_v2_t pdm_conf;
     cy_stc_pdm_pcm_channel_config_t chn_conf;
 
-    /* Configure P4.1 and P4.2 as PDM signals. */
+    /* Configure P4.1 and P4.2 as PDM signals */
     memset ((void *)&pinCfg, 0, sizeof(pinCfg));
     pinCfg.driveMode = CY_GPIO_DM_STRONG_IN_OFF;
     pinCfg.hsiom     = P9_0_PDM0_PDM_CLK0;
@@ -83,12 +83,12 @@ void Cy_UAC_PdmInit (void)
 
     memset ((uint8_t *)&pdm_conf, 0, sizeof(pdm_conf));
 
-    /* clk_pdm runs at 1/8 the frequency of clk_if. */
+    /* clk_pdm runs at 1/8 the frequency of clk_if */
     pdm_conf.clkDiv = 7;
     pdm_conf.clksel = CY_PDM_PCM_SEL_SRSS_CLOCK;
     pdm_conf.halverate = CY_PDM_PCM_RATE_FULL;
 #if STEREO_ENABLE
-    pdm_conf.route = 2;                 /* Stereo microphone: Single data bit used for both channels. */
+    pdm_conf.route = 2;                 /* Stereo microphone: Single data bit used for both channels */
 #else
     pdm_conf.route = 0;
 #endif /* STEREO_ENABLE */
@@ -100,7 +100,7 @@ void Cy_UAC_PdmInit (void)
     Cy_PDM_PCM_Init(PDM0, &pdm_conf);
 
     memset ((uint8_t *)&chn_conf, 0, sizeof(chn_conf));
-    /* Sample the signal 2 clk_if cycles after rising edge of clk_pdm. */
+    /* Sample the signal 2 clk_if cycles after rising edge of clk_pdm */
     chn_conf.sampledelay = 1;
     chn_conf.wordSize = CY_PDM_PCM_WSIZE_16_BIT;
     chn_conf.signExtension = true;
@@ -121,26 +121,26 @@ void Cy_UAC_PdmInit (void)
 #if PDM_TEST_GEN_EN
     cy_stc_test_config_t pdm_testCfg;
     memset((void *)&pdm_testCfg, 0, sizeof(pdm_testCfg));
-    pdm_testCfg.drive_delay_hi = 0;             /* Drive high signal 1 clk_if cycle after rising edge of clk_pdm. */
-    pdm_testCfg.drive_delay_lo = 4;             /* Drive low signal 5 clk_if cycles after rising edge of clk_pdm. */
-    pdm_testCfg.mode_hi = 3;                    /* Choose sinusoidal pattern for high mode test signal. */
-    pdm_testCfg.mode_lo = 3;                    /* Choose sinusoidal pattern for low mode test signal. */
+    pdm_testCfg.drive_delay_hi = 0;             /* Drive high signal 1 clk_if cycle after rising edge of clk_pdm */
+    pdm_testCfg.drive_delay_lo = 4;             /* Drive low signal 5 clk_if cycles after rising edge of clk_pdm */
+    pdm_testCfg.mode_hi = 3;                    /* Choose sinusoidal pattern for high mode test signal */
+    pdm_testCfg.mode_lo = 3;                    /* Choose sinusoidal pattern for low mode test signal */
     pdm_testCfg.audio_freq_div = 11;            /* Audio frequency = clk_pdm / 2*pi*(2^11) */
-    pdm_testCfg.enable = 1;                     /* Enable test signal generation. */
+    pdm_testCfg.enable = 1;                     /* Enable test signal generation */
 #endif /* PDM_TEST_GEN_EN */
 
-    /* Calling INIT enables the channel as well. */
+    /* Calling INIT enables the channel as well */
     Cy_PDM_PCM_Channel_Init(PDM0, &chn_conf, 0);
 
-    /* Configure connection from PDM0 RX Trigger to DW0 Channel 20 Input Trigger. */
+    /* Configure connection from PDM0 RX Trigger to DW0 Channel 20 Input Trigger */
     Cy_TrigMux_Select(TRIG_OUT_1TO1_3_PDM_RX0_TO_PDMA1_TR_IN20, false, TRIGGER_TYPE_LEVEL);
 
 #if STEREO_ENABLE
-    /* Sample the signal 6 clk_if cycles after rising edge of clk_pdm. */
+    /* Sample the signal 6 clk_if cycles after rising edge of clk_pdm */
     chn_conf.sampledelay = 5;
     Cy_PDM_PCM_Channel_Init(PDM0, &chn_conf, 1);
 
-    /* Configure connection from PDM1 RX Trigger to DW0 Channel 21 Input Trigger. */
+    /* Configure connection from PDM1 RX Trigger to DW0 Channel 21 Input Trigger */
     Cy_TrigMux_Select(TRIG_OUT_1TO1_3_PDM_RX1_TO_PDMA1_TR_IN21, false, TRIGGER_TYPE_LEVEL);
 #endif /* STEREO_ENABLE */
 
@@ -188,37 +188,14 @@ static void Cy_USB_PDMDmaReadCompletion (cy_stc_usb_app_ctxt_t *pAppCtxt)
 }
 
 /**
- * \name Cy_USB_PDMDmaWriteCompletion
- * \brief   Handle the completion of DMA transfer of audio data from RAM buffer into
- *          the USB 2.x EPM buffers.
- * \param pAppCtxt Pointer to application context structure.
- * \retval None
- */
-static void Cy_USB_PDMDmaWriteCompletion (cy_stc_usb_app_ctxt_t *pAppCtxt)
-{
-    BaseType_t status;
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    cy_stc_usbd_app_msg_t xMsg;
-
-    /* Clear the transfer pending flag. */
-    pAppCtxt->pdmInXferPending = false;
-
-    xMsg.type = CY_USB_PDM_MSG_WRITE_COMPLETE;
-    status = xQueueSendFromISR(pAppCtxt->uacMsgQueue, &(xMsg), &(xHigherPriorityTaskWoken));
-
-    (void)status;
-    (void)xHigherPriorityTaskWoken;
-}
-
-/**
- * \name PDM_CH1_RX_ISR
+ * \name Cy_PDM_RXCh1_ISR
  * \brief   Interrupt service routine for the DataWire channel reading from PDM
  *          Channel-1 RX FIFO.
  * \retval None
  */
-void PDM_CH1_RX_ISR(void)
+void Cy_PDM_RXCh1_ISR(void)
 {
-    /* Clear the interrupt. */
+    /* Clear the interrupt */
     Cy_DMA_Channel_ClearInterrupt(appCtxt.pCpuDw1Base, 21u);
 
     /* Check if the transfer on the Channel-0 has also been completed. Notify
@@ -232,14 +209,14 @@ void PDM_CH1_RX_ISR(void)
 }
 
 /**
- * \name PDM_CH0_RX_ISR
+ * \name Cy_PDM_RXCh0_ISR
  * \brief   Interrupt service routine for the DataWire channel reading from PDM
  *          Channel-0 RX FIFO.
  * \retval None
  */
-void PDM_CH0_RX_ISR (void)
+void Cy_PDM_RXCh0_ISR (void)
 {
-    /* Clear the interrupt. */
+    /* Clear the interrupt */
     Cy_DMA_Channel_ClearInterrupt(appCtxt.pCpuDw1Base, PDM_RX_CH0);
 
     /* Check if the transfer on the Channel-1 has also been completed. Notify
@@ -260,37 +237,36 @@ void PDM_CH0_RX_ISR (void)
  */
 void Cy_PDM_InEpDma_ISR (void)
 {
-    Cy_USB_AppClearDmaInterrupt(&appCtxt, UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN);
-    Cy_USB_PDMDmaWriteCompletion((void *)&appCtxt);
+    Cy_HBDma_Mgr_HandleDW1Interrupt(appCtxt.pHbDmaMgrCtxt);
     portYIELD_FROM_ISR(true);
 }
 
 /**
- * \name Cy_USB_App_PDM_InitDmaIntr
+ * \name Cy_UAC_PDMInitDmaIntr
  * \brief   Enable or disable the interrupt handlers for the DataWire channels reading
  *          data out from the PDM receive FIFOs.
  * \param enable Whether the interrupts are to be enabled or disabled.
  * \retval None
  */
-void Cy_USB_App_PDM_InitDmaIntr (bool enable)
+void Cy_UAC_PDMInitDmaIntr (bool enable)
 {
     cy_stc_sysint_t intrCfg;
 
     if (enable) {
-        DBG_APP_INFO("Registering PDM DW ISRs\r\n");
+        DBG_APP_INFO("UAC: Registering PDM DW ISRs\r\n");
 
 
 #if CY_CPU_CORTEX_M4
         intrCfg.intrSrc = (IRQn_Type)(cpuss_interrupts_dw1_20_IRQn);
-        intrCfg.intrPriority = 5; 
-        /* Interrupt for DataWire channel reading from PDM RX0 FIFO. */
-        Cy_SysInt_Init(&intrCfg, PDM_CH0_RX_ISR);
+        intrCfg.intrPriority = 5;
+        /* Interrupt for DataWire channel reading from PDM RX0 FIFO */
+        Cy_SysInt_Init(&intrCfg, Cy_PDM_RXCh0_ISR);
         NVIC_EnableIRQ(intrCfg.intrSrc);
 #else
         intrCfg.intrSrc = NvicMux1_IRQn;
         intrCfg.intrPriority = 1;
         intrCfg.cm0pSrc = cpuss_interrupts_dw1_20_IRQn;
-        /* Interrupt for DataWire channel reading from PDM RX0 FIFO. */
+        /* Interrupt for DataWire channel reading from PDM RX0 FIFO */
         Cy_SysInt_Init(&intrCfg, Cy_UVC_DataWire1Combined_ISR);
         NVIC_EnableIRQ(intrCfg.intrSrc);
 #endif /* CY_CPU_CORTEX_M4 */
@@ -299,8 +275,8 @@ void Cy_USB_App_PDM_InitDmaIntr (bool enable)
 #if STEREO_ENABLE
 #if CY_CPU_CORTEX_M4
         intrCfg.intrSrc = (IRQn_Type)(cpuss_interrupts_dw1_21_IRQn);
-        intrCfg.intrPriority = 5; 
-        Cy_SysInt_Init(&intrCfg, PDM_CH1_RX_ISR);
+        intrCfg.intrPriority = 5;
+        Cy_SysInt_Init(&intrCfg, Cy_PDM_RXCh1_ISR);
         NVIC_EnableIRQ(intrCfg.intrSrc);
 #else
         intrCfg.intrSrc = NvicMux1_IRQn;
@@ -312,7 +288,7 @@ void Cy_USB_App_PDM_InitDmaIntr (bool enable)
 
 #endif /* STEREO_ENABLE */
     } else {
-        DBG_APP_INFO("Disabling PDM DW ISRs\r\n");
+        DBG_APP_INFO("UAC: Disabling PDM DW ISRs\r\n");
 
         NVIC_DisableIRQ(cpuss_interrupts_dw1_20_IRQn);
 #if STEREO_ENABLE
@@ -326,7 +302,7 @@ void Cy_USB_App_PDM_InitDmaIntr (bool enable)
  * \brief   Activate the PDM receive channels for data transfer. This is done with
  *          a delay from the PDM interface selection so that the host application
  *          starts reading data out before the PDM receive FIFOs start getting filled.
- * \param xTimer: 
+ * \param xTimer:
  * Handle of timer trigger the PDM channel activation.
  *
  * \retval None
@@ -358,14 +334,14 @@ void Cy_PDM_QueuePDMRead (cy_stc_usb_app_ctxt_t *pAppCtxt,
     /* For disabling warning */
     stat = stat;
 
-    /* Save the current data size. */
+    /* Save the current data size */
 #if STEREO_ENABLE
     pAppCtxt->pdmRxDataLen[pAppCtxt->pdmRxBufIndex] = dataLength << 1u;
 #else
     pAppCtxt->pdmRxDataLen[pAppCtxt->pdmRxBufIndex] = dataLength;
 #endif /* STEREO_ENABLE */
 
-    /* If the DMA channel is already enabled, disable it. */
+    /* If the DMA channel is already enabled, disable it */
 #if STEREO_ENABLE
     pAppCtxt->pdmPendingDmaFlag = 3;
     Cy_DMA_Channel_Disable(DW1, PDM_RX_CH1);
@@ -443,7 +419,7 @@ void Cy_PDM_QueuePDMRead (cy_stc_usb_app_ctxt_t *pAppCtxt,
     Cy_DMA_Channel_SetInterruptMask(DW1, PDM_RX_CH1, CY_DMA_INTR_MASK);
 #endif /* STEREO_ENABLE */
 
-    /* Enable the DataWire channels. */
+    /* Enable the DataWire channels */
     Cy_DMA_Channel_Enable(DW1, PDM_RX_CH0);
 #if STEREO_ENABLE
     Cy_DMA_Channel_Enable(DW1, PDM_RX_CH1);
@@ -463,17 +439,25 @@ void
 Cy_USB_AppPDMSendData (cy_stc_usb_app_ctxt_t *pAppCtxt,
                        uint8_t *dataBuf_p, uint32_t dataLength)
 {
-    /* Send the data on the IN endpoint if it is currently idle. */
-    if (!pAppCtxt->pdmInXferPending) {
-        pAppCtxt->pdmInXferPending = true;
-        Cy_USB_AppQueueWrite(pAppCtxt, UAC_IN_ENDPOINT, dataBuf_p, dataLength);
+    cy_stc_hbdma_buff_status_t dmaBufStat;
+    cy_en_hbdma_mgr_status_t   hbdma_stat;
 
-            pAppCtxt->nxtAudioTxBufIndex++;
-            if (pAppCtxt->nxtAudioTxBufIndex >= PDM_APP_BUFFER_CNT) {
-                pAppCtxt->nxtAudioTxBufIndex = 0;
-            }
-        }
-    
+    if(pAppCtxt->pPDMToUsbChn == NULL)
+    {
+        return;
+    }
+
+    dmaBufStat.pBuffer = dataBuf_p;
+    dmaBufStat.size    = dataLength;
+    dmaBufStat.count   = dataLength;
+    dmaBufStat.status  = 0;
+
+    /* Just commit the buffer */
+    hbdma_stat = Cy_HBDma_Channel_CommitBuffer(pAppCtxt->pPDMToUsbChn, &dmaBufStat);
+    if (hbdma_stat != CY_HBDMA_MGR_SUCCESS) {
+        DBG_APP_ERR("UAC: Commit buffer failed =%x\r\n", hbdma_stat);
+    }
+
 }
 
 /**
@@ -490,14 +474,14 @@ void Cy_USB_PDMDeviceTaskHandler (void *pTaskParam)
     cy_stc_usb_app_ctxt_t *pAppCtxt = (cy_stc_usb_app_ctxt_t *)pTaskParam;
     uint32_t intMask;
 
-    DBG_APP_INFO("PDM-UAC task started\r\n");
+    DBG_APP_INFO("UAC: Task started\r\n");
 
-    /* Enable interrupts for the DW channels which read data from the PDM FIFOs. */
-    Cy_USB_App_PDM_InitDmaIntr(true);
+    /* Enable interrupts for the DW channels which read data from the PDM FIFOs */
+    Cy_UAC_PDMInitDmaIntr(true);
 
     do
     {
-        /* Wait for messages to be received from the ISRs. */
+        /* Wait for messages to be received from the ISRs */
         xStatus = xQueueReceive(pAppCtxt->uacMsgQueue, &queueMsg, 100);
         if (xStatus != pdPASS)
         {
@@ -507,14 +491,14 @@ void Cy_USB_PDMDeviceTaskHandler (void *pTaskParam)
         switch (queueMsg.type)
         {
             case CY_USB_PDM_MSG_READ_COMPLETE:
-                DBG_APP_TRACE("PDM_READ_COMPLETE\r\n");
+                DBG_APP_TRACE("UAC: PDM Read Complete \r\n");
 
-                /* Commit the buffer to send the data on USB IN endpoint. */
+                /* Commit the buffer to send the data on USB IN endpoint */
                 Cy_USB_AppPDMSendData(pAppCtxt, pAppCtxt->pPDMRxBuffer[pAppCtxt->pdmRxBufIndex],
                         pAppCtxt->pdmRxDataLen[pAppCtxt->pdmRxBufIndex]);
 
                 intMask = Cy_SysLib_EnterCriticalSection();
-                /* Move to the next RX buffer for the next read. */
+                /* Move to the next RX buffer for the next read */
                 pAppCtxt->pdmRxBufIndex++;
                 if (pAppCtxt->pdmRxBufIndex >= PDM_APP_BUFFER_CNT) {
                     pAppCtxt->pdmRxBufIndex = 0;
@@ -524,32 +508,15 @@ void Cy_USB_PDMDeviceTaskHandler (void *pTaskParam)
                 if (pAppCtxt->pdmRxFreeBufCount != 0) {
                     Cy_SysLib_ExitCriticalSection(intMask);
 
-                    /* Queue read from the UART RX FIFO into the next DMA buffer. */
+                    /* Queue read from the UART RX FIFO into the next DMA buffer */
                     Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
                 } else {
                     Cy_SysLib_ExitCriticalSection(intMask);
                 }
                 break;
 
-            case CY_USB_PDM_MSG_WRITE_COMPLETE:
-                /* Data has been consumed on USB side and buffer is free now. */
-                if (pAppCtxt->pdmRxFreeBufCount == 0) {
-                    /* Queue read from the UART RX FIFO into the next DMA buffer. */
-                    Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
-                }
-
-                pAppCtxt->pdmRxFreeBufCount++;
-
-                /* If we have at least one occupied buffer, queue the next write operation. */
-                if (pAppCtxt->pdmRxFreeBufCount < PDM_APP_BUFFER_CNT) {
-                    Cy_USB_AppPDMSendData(pAppCtxt,
-                            pAppCtxt->pPDMRxBuffer[pAppCtxt->nxtAudioTxBufIndex],
-                            pAppCtxt->pdmRxDataLen[pAppCtxt->nxtAudioTxBufIndex]);
-                }
-                break;
-
             default:
-                DBG_APP_INFO("UACTask: Unknown message %x\r\n", queueMsg.type);
+                DBG_APP_INFO("UAC: Unknown message %x\r\n", queueMsg.type);
                 break;
         }
 
@@ -557,13 +524,13 @@ void Cy_USB_PDMDeviceTaskHandler (void *pTaskParam)
 }
 
 /**
- * \name Cy_App_SetUACIntfHandler
+ * \name Cy_UAC_SetIntfHandler
  * \brief Set Interface request handler for the UAC audio streaming interface.
  * \param pAppCtxt Pointer to the application context structure.
  * \param altSetting Selected alternate setting for the audio streaming interface.
  * \retval None
  */
-void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
+void Cy_UAC_SetIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
                                uint8_t altSetting)
 {
     cy_stc_usb_usbd_ctxt_t *pUsbdCtxt = pAppCtxt->pUsbdCtxt;
@@ -572,30 +539,30 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
     int8_t numOfEndp;
     cy_en_usb_endp_dir_t endpDirection;
 
-    DBG_APP_INFO("SetUACStreamingInterface start\r\n");
+    DBG_APP_TRACE("UAC: Set Interface handler\r\n");
     if (altSetting == pAppCtxt->prevAltSetting)
     {
-        DBG_APP_INFO("SameAltSetting\r\n");
+        DBG_APP_INFO("UAC: SameAltSetting\r\n");
         return;
     }
 
-    /* New altSetting is different than previous one, so unconfigure previous. */
-    DBG_APP_INFO("UnconfigPrevAltSet\r\n");
+    /* New altSetting is different than previous one, so unconfigure previous */
+    DBG_APP_TRACE("UAC: Unconfig Prev AltSet\r\n");
     pIntfDscr = Cy_USBD_GetIntfDscr(pUsbdCtxt, UAC_STREAM_INTF_NUM, pAppCtxt->prevAltSetting);
     if (pIntfDscr == NULL)
     {
-        DBG_APP_INFO("pIntfDscrNull\r\n");
+        DBG_APP_INFO("UAC: pIntfDscrNull\r\n");
         return;
     }
 
     numOfEndp = Cy_USBD_FindNumOfEndp(pIntfDscr);
     if (numOfEndp == 0x00)
     {
-        DBG_APP_INFO("SetIntf:prevNumEp 0\r\n");
+        DBG_APP_INFO("UAC: prev NumEp 0\r\n");
     }
     else
     {
-        /* Disable the DataWire channel and clear corresponding data structures. */
+        /* Disable the DataWire channel and clear corresponding data structures */
         Cy_DMA_Channel_Disable(pAppCtxt->pCpuDw1Base, PDM_RX_CH0);
 #if STEREO_ENABLE
         Cy_DMA_Channel_Disable(pAppCtxt->pCpuDw1Base, PDM_RX_CH1);
@@ -604,10 +571,14 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
         pAppCtxt->pdmRxFreeBufCount = PDM_APP_BUFFER_CNT;
         pAppCtxt->pdmRxBufIndex     = 0;
 
-        /* Free up the RAM buffers if present. */
-        Cy_USB_App_FreeAllDmaBuffers(pAppCtxt);
+        /* Free up the high bandwidth DMA channel if present */
+        if (pAppCtxt->pPDMToUsbChn != NULL) {
+            Cy_HBDma_Channel_Disable(pAppCtxt->pPDMToUsbChn);
+            Cy_HBDma_Channel_Destroy(pAppCtxt->pPDMToUsbChn);
+            pAppCtxt->pPDMToUsbChn = NULL;
+        }
 
-        /* Run through all endpoints which were previously used and flush, reset, disable them. */
+        /* Run through all endpoints which were previously used and flush, reset, disable them */
         pEndpDscr = Cy_USBD_GetEndpDscr(pUsbdCtxt, pIntfDscr);
         while (numOfEndp != 0x00)
         {
@@ -619,25 +590,22 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
             {
                 endpDirection = CY_USB_ENDP_DIR_OUT;
             }
-            
             endpNumber = (uint32_t)((*(pEndpDscr + CY_USB_ENDP_DSCR_OFFSET_ADDRESS)) & 0x7F);
-            
-            if((MXS40USBHSDEV_USBHSDEV->EEPM_DEBUG_ENDPOINT[endpNumber] & USBHSDEV_EEPM_DEBUG_ENDPOINT_EGRS_P_REQUESTS_Msk) != 0)
-            {
-	            /* Flush, reset and then disable the endpoint. */
-	            Cy_USBD_FlushEndp(pUsbdCtxt, endpNumber, endpDirection);
-            } 
+
+            /* Flush, reset and then disable the endpoint */
+            Cy_USBD_FlushEndp(pUsbdCtxt, endpNumber, endpDirection);
+
             Cy_USBD_ResetEndp(pUsbdCtxt, endpNumber, endpDirection, false);
-            
+
             Cy_USBD_EnableEndp(pUsbdCtxt, endpNumber, endpDirection, false);
             numOfEndp--;
 
-            /* Move to the next endpoint descriptor. */
+            /* Move to the next endpoint descriptor */
             pEndpDscr = (pEndpDscr + (*(pEndpDscr + CY_USB_DSCR_OFFSET_LEN)));
-            
+
         }
 
-        /* Deactivate the PDM channel and drain the FIFO. */
+        /* Deactivate the PDM channel and drain the FIFO */
         Cy_PDM_PCM_DeActivate_Channel(PDM0, 0);
         while (Cy_PDM_PCM_Channel_GetNumInFifo(PDM0, 0) > 0) {
             (void)Cy_PDM_PCM_Channel_ReadFifo(PDM0, 0);
@@ -650,58 +618,56 @@ void Cy_App_SetUACIntfHandler (cy_stc_usb_app_ctxt_t *pAppCtxt,
         }
 #endif /* STEREO_ENABLE */
 
-        DBG_APP_INFO("PDM DMA Stop done\r\n");
+        DBG_APP_INFO("UAC: DMA Stop done\r\n");
     }
 
     pAppCtxt->prevAltSetting = altSetting;
-    
-    
+
     if(pAppCtxt->prevAltSetting != 0)
     {
-	    /* Now take care of different config with new alt setting. */
-	    pIntfDscr = Cy_USBD_GetIntfDscr(pUsbdCtxt, UAC_STREAM_INTF_NUM, altSetting);
-	    if (pIntfDscr == NULL)
-	    {
-	        DBG_APP_INFO("pIntfDscrNull\r\n");
-	        return;
-	    }
-	
-	    numOfEndp = Cy_USBD_FindNumOfEndp(pIntfDscr);
-	    if (numOfEndp == 0x00)
-	    {
-	        DBG_APP_INFO("SetIntf:numEp 0\r\n");
-	    }
-	    else
-	    {
-	        pEndpDscr = Cy_USBD_GetEndpDscr(pUsbdCtxt, pIntfDscr);
-	        while (numOfEndp != 0x00)
-	        {
-	            Cy_USB_AppConfigureEndp(pUsbdCtxt, pEndpDscr);
-	            Cy_USB_AppSetupEndpDmaParamsHs(pAppCtxt, pEndpDscr);
-	            numOfEndp--;
-	
-	            /* Move to the next endpoint. */
-	            pEndpDscr = (pEndpDscr + (*(pEndpDscr + CY_USB_DSCR_OFFSET_LEN)));
-	            
-	        }
-	
-	#if CY_CPU_CORTEX_M4
-	        /* Register interrupt for the DW channel associated with the UAC IN endpoint. */
-	        Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_PDM_InEpDma_ISR);
-	#else
-	        /* Register interrupt for the DW channel associated with the UAC IN endpoint. */
-	        Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_UVC_DataWire1Combined_ISR);
-	#endif /* CY_CPU_CORTEX_M4 */
-	
-	        /* Queue the first read from the PDM receive FIFOs. */
-	        Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
-	      
-	        /* Start a timer which will activate the PDM receive channels after some time. */
-	        xTimerReset(pAppCtxt->pdmActivateTimer, 0);
-	    }
+        /* Now take care of different config with new alt setting */
+        pIntfDscr = Cy_USBD_GetIntfDscr(pUsbdCtxt, UAC_STREAM_INTF_NUM, altSetting);
+        if (pIntfDscr == NULL)
+        {
+        DBG_APP_INFO("UAC: pIntfDscrNull\r\n");
+            return;
+        }
+
+        numOfEndp = Cy_USBD_FindNumOfEndp(pIntfDscr);
+        if (numOfEndp == 0x00)
+        {
+        DBG_APP_INFO("UAC:numEp 0\r\n");
+        }
+        else
+        {
+            pEndpDscr = Cy_USBD_GetEndpDscr(pUsbdCtxt, pIntfDscr);
+            while (numOfEndp != 0x00)
+            {
+                Cy_USB_AppConfigureEndp(pUsbdCtxt, pEndpDscr);
+                Cy_USB_AppSetupEndpDmaParamsHs(pAppCtxt, pEndpDscr);
+                numOfEndp--;
+
+                /* Move to the next endpoint */
+                pEndpDscr = (pEndpDscr + (*(pEndpDscr + CY_USB_DSCR_OFFSET_LEN)));
+
+            }
+
+    #if CY_CPU_CORTEX_M4
+            /* Register interrupt for the DW channel associated with the UAC IN endpoint */
+            Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_PDM_InEpDma_ISR);
+    #else
+            /* Register interrupt for the DW channel associated with the UAC IN endpoint */
+            Cy_USB_AppInitDmaIntr(UAC_IN_ENDPOINT, CY_USB_ENDP_DIR_IN, Cy_UVC_DataWire1Combined_ISR);
+    #endif /* CY_CPU_CORTEX_M4 */
+
+            /* Queue the first read from the PDM receive FIFOs */
+            Cy_PDM_QueuePDMRead(pAppCtxt, PDM_READ_SIZE);
+
+            /* Start a timer which will activate the PDM receive channels after some time */
+            xTimerReset(pAppCtxt->pdmActivateTimer, 0);
+        }
     }
 
-    DBG_APP_INFO("UAC SetIntf done\r\n");
 }
 
 /**
@@ -718,31 +684,31 @@ void Cy_UAC_AppInit (cy_stc_usb_app_ctxt_t *pAppCtxt)
         return;
     }
 
-    Cy_USB_App_FreeAllDmaBuffers(pAppCtxt);
-    
-    /* Create queue and register it to kernel. */
+    pAppCtxt->pPDMToUsbChn = NULL;
+
+    /* Create queue and register it to kernel */
     pAppCtxt->uacMsgQueue = xQueueCreate(24, CY_USB_UVC_DEVICE_MSG_SIZE);
     if (pAppCtxt->uacMsgQueue == NULL)
     {
-        DBG_APP_ERR("UAC MsgQueue created failed\r\n");
+        DBG_APP_ERR("UAC: MsgQueue created failed\r\n");
         return;
     }
 
-    DBG_APP_INFO("Created PDM Queue\r\n");
+    DBG_APP_INFO("UAC: PDM Queue created\r\n");
     vQueueAddToRegistry(pAppCtxt->uacMsgQueue, "PDMDeviceMsgQueue");
 
-    /* Create task and check status to confirm task created properly. */
+    /* Create task and check status to confirm task created properly */
     status = xTaskCreate(Cy_USB_PDMDeviceTaskHandler, "PDMTask", 1024,
             (void *)pAppCtxt, 6, &(pAppCtxt->uacAppTaskHandle));
     if (status != pdPASS)
     {
-        DBG_APP_ERR("UAC TaskCreate failed\r\n");
+        DBG_APP_ERR("UAC: Task Create failed\r\n");
         return;
     }
 
     pAppCtxt->pdmActivateTimer = xTimerCreate("PDMDelayTimer", 10, pdFALSE,
             (void *)pAppCtxt, PDMChannelActivateTimerCb);
-    DBG_APP_INFO("UAC AppInit done\r\n");
+    DBG_APP_INFO("UAC: App Init done\r\n");
 }
 
 #endif /* AUDIO_IF_EN */

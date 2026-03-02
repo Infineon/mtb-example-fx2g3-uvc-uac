@@ -19,7 +19,7 @@
 *
 ********************************************************************************
 * \copyright
-* Copyright (2025) Cypress Semiconductor Corporation
+* Copyright (2026) Cypress Semiconductor Corporation
 * SPDX-License-Identifier: Apache-2.0
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +68,7 @@ MEMORY
     dmabuf            (rwx)   : ORIGIN = 0x1C004000, LENGTH = 0x0C000
 
 
-    /* The following regions define device specific memory regions and must not be changed. */
+    /* The following regions define device specific memory regions and must not be changed */
     sflash_user_data  (rx)    : ORIGIN = 0x16000800, LENGTH = 0x800        /* Supervisory flash: User data */
     sflash_nar        (rx)    : ORIGIN = 0x16001A00, LENGTH = 0x200        /* Supervisory flash: Normal Access Restrictions (NAR) */
     sflash_public_key (rx)    : ORIGIN = 0x16005A00, LENGTH = 0xC00        /* Supervisory flash: Public Key */
@@ -120,7 +120,7 @@ SECTIONS
     /* Cortex-M4 application flash area */
     .text :
     {
-        /* Keep the CM0P boot code in the beginning. */
+        /* Keep the CM0P boot code in the beginning */
         KEEP(*(.cm0_code*))
 
         /* Cortex-M4 flash vector table */
@@ -151,21 +151,21 @@ SECTIONS
         *(SORT(.dtors.*))
         *(.dtors)
 
-        /* Read-only code (constants). */
+        /* Read-only code (constants) */
         *(.rodata .rodata.* .constdata .constdata.* .conststring .conststring.*)
 
         KEEP(*(.eh_frame*))
     } > flash
 
 
-    .ARM.extab :
+    .ARM.extab (READONLY) :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
     } > flash
 
     __exidx_start = .;
 
-    .ARM.exidx :
+    .ARM.exidx (READONLY) :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
     } > flash
@@ -175,7 +175,7 @@ SECTIONS
     /* To copy multiple ROM to RAM sections,
      * uncomment .copy.table section and,
      * define __STARTUP_COPY_MULTIPLE in startup_fx2g3_cm4.S */
-    .copy.table :
+    .copy.table (READONLY) :
     {
         . = ALIGN(4);
         __copy_table_start__ = .;
@@ -202,7 +202,7 @@ SECTIONS
     /* To clear multiple BSS sections,
      * uncomment .zero.table section and,
      * define __STARTUP_CLEAR_BSS_MULTIPLE in startup_fx2g3_cm4.S */
-    .zero.table :
+    .zero.table (READONLY) :
     {
         . = ALIGN(4);
         __zero_table_start__ = .;
@@ -262,7 +262,7 @@ SECTIONS
     } > ram AT>flash
 
 
-    /* Contents from the descSection need to be placed in the dmabuf region. */
+    /* Contents from the descSection need to be placed in the dmabuf region */
     .hbRamData :
     {
         . = ALIGN(4);
@@ -273,14 +273,14 @@ SECTIONS
     } > dmabuf AT>flash
 
 
-    /* Un-initialized memory buffers to be placed in High BandWidth RAM. */
+    /* Un-initialized memory buffers to be placed in High BandWidth RAM */
     .hbRamBuf (NOLOAD) :
     {
         . = ALIGN(4);
         KEEP(*(.hbBufSection*))
     } > dmabuf
 
-    /* Roll back to end of data segment in System RAM. */
+    /* Roll back to end of data segment in System RAM */
     . = __data_end__;
 
 
@@ -346,7 +346,7 @@ SECTIONS
 
 
     /* Used for the digital signature of the secure application and the Bootloader SDK application.
-    * The size of the section depends on the required data size. */
+    * The size of the section depends on the required data size */
     .cy_app_signature ORIGIN(flash) + LENGTH(flash) - 512 :
     {
         KEEP(*(.cy_app_signature))
@@ -415,13 +415,13 @@ SECTIONS
 }
 
 
-/* The following symbols used by the cymcuelftool. */
+/* The following symbols used by the cymcuelftool */
 /* Flash */
 __cy_memory_0_start    = 0x10008000;
 __cy_memory_0_length   = 0x00078000;
 __cy_memory_0_row_size = 0x200;
 
-/* Symbols provided to cymcuelftool for checksum generation. */
+/* Symbols provided to cymcuelftool for checksum generation */
 __cy_app_verify_start   = 0x10008000;
 __cy_app_verify_length  = 0x77E00;
 __cy_app_signature_addr = 0x1007FE00;
