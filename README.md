@@ -5,7 +5,7 @@ This code example demonstrates the implementation of a USB Video Class (UVC) 1.1
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-fx2g3-uvc-uac)
 
-[Provide feedback on this code example.](https://yourvoice.infineon.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyNDA2ODgiLCJTcGVjIE51bWJlciI6IjAwMi00MDY4OCIsIkRvYyBUaXRsZSI6IkVaLVVTQiZ0cmFkZTsgRlgyRzM6IFVTQiBWaWRlbyBDbGFzcyAoVVZDKSBhcHBsaWNhdGlvbiIsInJpZCI6InN1bWl0Lmt1bWFyQGluZmluZW9uLmNvbSIsIkRvYyB2ZXJzaW9uIjoiMS4wLjQiLCJEb2MgTGFuZ3VhZ2UiOiJFbmdsaXNoIiwiRG9jIERpdmlzaW9uIjoiTUNEIiwiRG9jIEJVIjoiV0lSRUQiLCJEb2MgRmFtaWx5IjoiSFNMU19VU0IifQ==)
+[Provide feedback on this code example.](https://yourvoice.infineon.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyNDA2ODgiLCJTcGVjIE51bWJlciI6IjAwMi00MDY4OCIsIkRvYyBUaXRsZSI6IkVaLVVTQiZ0cmFkZTsgRlgyRzM6IFVTQiBWaWRlbyBDbGFzcyAoVVZDKSBhcHBsaWNhdGlvbiIsInJpZCI6InN1bWl0Lmt1bWFyQGluZmluZW9uLmNvbSIsIkRvYyB2ZXJzaW9uIjoiMS4wLjUiLCJEb2MgTGFuZ3VhZ2UiOiJFbmdsaXNoIiwiRG9jIERpdmlzaW9uIjoiTUNEIiwiRG9jIEJVIjoiV0lSRUQiLCJEb2MgRmFtaWx5IjoiSFNMU19VU0IifQ==)
 
 
 ## Requirements
@@ -575,6 +575,7 @@ Document title: *CE240688* – *EZ-USB&trade; FX2G3: USB video class (UVC) appli
  1.0.2   | Updated for CM0+
  1.0.3   | Updated to use the example with other products
  1.0.4   | Updated data handlers to use new DMA APIs from USBFXStack
+ 1.0.4   | Updated to use firmware-generated and FPGA-generated colorbar patterns
 
 <br>
 

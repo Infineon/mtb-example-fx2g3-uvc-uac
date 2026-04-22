@@ -150,28 +150,30 @@ uint32_t Ep0TestBuffer[32U]__attribute__ ((aligned (32)));
 uint32_t Cy_UVC_SendResolution (uint16_t width, uint16_t height, uint8_t device_offset)
 {
     cy_en_scb_i2c_status_t  status = CY_SCB_I2C_SUCCESS;
+    
+    uint8_t deviceNum = (device_offset - DEVICE0_OFFSET) / FPGA_STREAMING_DEV_REG_COUNT;
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,device_offset+DEVICE_IMAGE_WIDTH_MSB_ADDRESS,CY_USB_GET_MSB(width),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_IMAGE_WIDTH_MSB_ADDRESS(deviceNum),CY_USB_GET_MSB(width),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,device_offset+DEVICE_IMAGE_WIDTH_LSB_ADDRESS,CY_USB_GET_LSB(width),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_IMAGE_WIDTH_LSB_ADDRESS(deviceNum),CY_USB_GET_LSB(width),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,device_offset+DEVICE_IMAGE_HEIGHT_MSB_ADDRESS,CY_USB_GET_MSB(height),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_IMAGE_HEIGHT_MSB_ADDRESS(deviceNum),CY_USB_GET_MSB(height),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,device_offset+DEVICE_IMAGE_HEIGHT_LSB_ADDRESS,CY_USB_GET_LSB(height),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_IMAGE_HEIGHT_LSB_ADDRESS(deviceNum),CY_USB_GET_LSB(height),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,device_offset+FPGA_DEVICE_STREAM_MODE_ADDRESS,NO_CONVERSION,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,FPGA_DEVICE_STREAM_MODE_ADDRESS(deviceNum),NO_CONVERSION,
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,device_offset+DEVICE_FPS_ADDRESS,FPS_DEFAULT,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_FPS_ADDRESS(deviceNum),FPS_DEFAULT,
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
     DBG_APP_INFO("UVC: FPS %d \r\n", FPS_DEFAULT);
@@ -189,20 +191,22 @@ cy_en_scb_i2c_status_t Cy_UVC_DataStreamStartStop(uint8_t device_offset, cy_en_s
 {
     cy_en_scb_i2c_status_t status = CY_SCB_I2C_SUCCESS;
 
+    uint8_t deviceNum = (device_offset - DEVICE0_OFFSET) / FPGA_STREAMING_DEV_REG_COUNT;
+
     if (device_offset == DEVICE0_OFFSET)
         glUvcIsApplnActive = IsStreamStart?true:false;
 
     if(IsStreamStart)
-        status = Cy_I2C_Write(FPGASLAVE_ADDR,(device_offset+FPGA_DEVICE_STREAM_ENABLE_ADDRESS),DATA_ENABLE,
+        status = Cy_I2C_Write(FPGASLAVE_ADDR,(FPGA_DEVICE_STREAM_ENABLE_ADDRESS(deviceNum)),DATA_ENABLE,
                                             FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     else
 
-        status = Cy_I2C_Write(FPGASLAVE_ADDR,(device_offset+FPGA_DEVICE_STREAM_ENABLE_ADDRESS),DATA_DISABLE,
+        status = Cy_I2C_Write(FPGASLAVE_ADDR,(FPGA_DEVICE_STREAM_ENABLE_ADDRESS(deviceNum)),DATA_DISABLE,
                                             FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
 
     if(status == CY_SCB_I2C_SUCCESS)
     {
-        DBG_APP_INFO("UVC: Video Start = %d FPGA device Offset 0x%x\r\n",IsStreamStart, device_offset);
+        DBG_APP_INFO("UVC: Video Start = %d FPGA deviceNum 0x%x\r\n",IsStreamStart, deviceNum);
     }
 
     return status;
@@ -260,7 +264,7 @@ static cy_en_scb_i2c_status_t Cy_UVC_ConfigFpgaRegister (void)
     uint16_t height = V_RES_1080;
 
     /* Disable camera before configuring FPGA register */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+FPGA_DEVICE_STREAM_ENABLE_ADDRESS,DATA_DISABLE,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,FPGA_DEVICE_STREAM_ENABLE_ADDRESS(0),DATA_DISABLE,
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
@@ -283,25 +287,25 @@ static cy_en_scb_i2c_status_t Cy_UVC_ConfigFpgaRegister (void)
 
 
     /* Number of active device list*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,FPGA_ACTIVE_DIVICE_MASK_ADDRESS,0x01,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,FPGA_ACTIVE_DEVICE_MASK_ADDRESS,0x01,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
 
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
     Cy_SysLib_DelayUs(500);
 
     /* write FPGA register to Disable format converstion */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+FPGA_DEVICE_STREAM_MODE_ADDRESS,NO_CONVERSION,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,FPGA_DEVICE_STREAM_MODE_ADDRESS(0),NO_CONVERSION,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
 #if (MIPI_SOURCE_ENABLE)
     /* Select MIPI source */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_SOURCE_TYPE_ADDRESS,MIPI_SOURCE,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_SOURCE_TYPE_ADDRESS(0),MIPI_SOURCE,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
 
 #else
     /* Select colorbar mode by default if DYNAMIC_VIDEOSOURCE is true*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_SOURCE_TYPE_ADDRESS,INTERNAL_COLORBAR,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_SOURCE_TYPE_ADDRESS(0),INTERNAL_COLORBAR,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
 #endif /* (MIPI_SOURCE_ENABLE) */
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
@@ -314,83 +318,83 @@ static cy_en_scb_i2c_status_t Cy_UVC_ConfigFpgaRegister (void)
      * if FPGA sets kkk as 0 for Thread 1, actual socket number connected to Thread 1 is 1
      */
     /* Inform active threads*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_ACTIVE_TREAD_INFO_ADDRESS,2,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_ACTIVE_TREAD_INFO_ADDRESS(0),2,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     /* inform active sockets*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_THREAD2_SOCKET_INFO_ADDRESS,CY_LVDS_GPIF_THREAD_1,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_THREAD2_SOCKET_INFO_ADDRESS(0),CY_LVDS_GPIF_THREAD_1,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     /* */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_THREAD2_INFO_ADDRESS,1,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_THREAD2_INFO_ADDRESS(0),1,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
 #else /* Single Thread*/
      /* Inform active threads*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_ACTIVE_TREAD_INFO_ADDRESS,1,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_ACTIVE_THREAD_INFO_ADDRESS(0),1,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     /* Inform active sockets*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_THREAD2_SOCKET_INFO_ADDRESS,0,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_THREAD2_SOCKET_INFO_ADDRESS(0),0,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     /* Thread 2 information*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_THREAD2_INFO_ADDRESS,0,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_THREAD2_INFO_ADDRESS(0),0,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 #endif /* INTERLEAVE_EN */
 
     /* Thread 1 information*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_THREAD1_INFO_ADDRESS,CY_LVDS_GPIF_THREAD_0,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_THREAD1_INFO_ADDRESS(0),CY_LVDS_GPIF_THREAD_0,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     /* Thread 1 socket information*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_THREAD1_SOCKET_INFO_ADDRESS,0,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_THREAD1_SOCKET_INFO_ADDRESS(0),0,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     /* Clear FPGA register during power up, this will get update when firmware detects HDMI */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_SOURCE_INFO_ADDRESS,SOURCE_DISCONNECT,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_SOURCE_INFO_ADDRESS(0),SOURCE_DISCONNECT,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     DBG_APP_INFO("UVC: DMA Buffer Size %d \r\n",FPGA_DMA_BUFFER_SIZE);
 
     /* Update DMA buffer size used by Firmware */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_BUFFER_SIZE_MSB_ADDRESS,CY_GET_MSB(FPGA_DMA_BUFFER_SIZE),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_BUFFER_SIZE_MSB_ADDRESS(0),CY_GET_MSB(FPGA_DMA_BUFFER_SIZE),
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_BUFFER_SIZE_LSB_ADDRESS,CY_GET_LSB(FPGA_DMA_BUFFER_SIZE),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_BUFFER_SIZE_LSB_ADDRESS(0),CY_GET_LSB(FPGA_DMA_BUFFER_SIZE),
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     /* Update default resolution width size used by Firmware */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_IMAGE_WIDTH_MSB_ADDRESS,CY_GET_MSB(width),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_IMAGE_WIDTH_MSB_ADDRESS(0),CY_GET_MSB(width),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_IMAGE_WIDTH_LSB_ADDRESS,CY_GET_LSB(width),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_IMAGE_WIDTH_LSB_ADDRESS(0),CY_GET_LSB(width),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
  /* Update default resolution height size used by Firmware */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_IMAGE_HEIGHT_MSB_ADDRESS,CY_GET_MSB(height),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_IMAGE_HEIGHT_MSB_ADDRESS(0),CY_GET_MSB(height),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_IMAGE_HEIGHT_LSB_ADDRESS,CY_GET_LSB(height),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_IMAGE_HEIGHT_LSB_ADDRESS(0),CY_GET_LSB(height),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
     /* default fps*/
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_FPS_ADDRESS,60,
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_FPS_ADDRESS(0),60,
                                           FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
@@ -801,7 +805,7 @@ void Cy_UVC_DeviceTaskHandler(void *pTaskParam)
 
                 DBG_APP_TRACE("FPGA: Select Internal Colorbar \r\n");
                 cy_en_scb_i2c_status_t status = CY_SCB_I2C_SUCCESS;
-                status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_SOURCE_TYPE_ADDRESS, INTERNAL_COLORBAR,
+                status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE_SOURCE_TYPE_ADDRESS(0), INTERNAL_COLORBAR,
                                                       FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
                 ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
             }

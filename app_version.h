@@ -31,7 +31,7 @@
 /* Macros */
 #define APP_VERSION_MAJOR      (1u)
 #define APP_VERSION_MINOR      (0u)
-#define APP_VERSION_PATCH      (4u)
+#define APP_VERSION_PATCH      (5u)
 #define APP_VERSION_BUILD      (60u)
 
 #define APP_VERSION_NUM        ((APP_VERSION_MAJOR << 28u) | (APP_VERSION_MINOR << 24u) | \

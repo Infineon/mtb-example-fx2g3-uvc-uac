@@ -139,7 +139,7 @@ INCLUDES=
 
 
 # Colorbar generation by firmware disabled by default. Set FWGEN_EN=yes to enable.
-FWGEN?=yes
+FWGEN?=no
 
 ifeq ($(FWGEN), yes)
     # Add additional defines to the build process (without a leading -D).
@@ -171,7 +171,7 @@ else
             INTERLEAVE_EN=0 \
             DEVICE1_EN=0 \
             PRE_ADDED_HEADER=0 \
-            MIPI_SOURCE_ENABLE=1 \
+            MIPI_SOURCE_ENABLE=0 \
             AUDIO_IF_EN=1 \
             STEREO_ENABLE=0 \
             FPGA_CONFIG_EN=1

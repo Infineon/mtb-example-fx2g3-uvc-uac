@@ -1,4 +1,4 @@
-# EZ-USB&trade; FX2G3: USB Video Class (UVC) application 1.0.4
+# EZ-USB&trade; FX2G3: USB Video Class (UVC) application 1.0.5
 
 ## What's Included?
 
@@ -6,7 +6,7 @@ Refer to the [README.md](./README.md).
 
 ## Defect Fixes
 
-* Updated data handlers to use new DMA APIs from USBFXStack
+* Updated to use firmware-generated and FPGA-generated colorbar patterns
 
 ## Supported Software and Tools
 
@@ -16,7 +16,7 @@ This version of the application is compatible with the following software and to
 | :---                                                     | :----:  |
 | ModusToolbox&trade; software                             | 3.5.0   |
 | CAT1A Peripheral Driver Library                          | 3.16.0  |
-| USBFXStack Middleware Library                            | 1.3.1   |
+| USBFXStack Middleware Library                            | 1.3.2   |
 | FreeRTOS&trade; for Infineon MCUs                        | 10.5.002|
 | GNU Arm&reg; Embedded Compiler                           | 14.2.1  |
 | Arm&reg; Compiler                                        | 6.22    |
